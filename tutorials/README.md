@@ -7,6 +7,6 @@ For general prerequisites please refer to [Prerequisites](../README.md)
 
 ### Overview
 
-* [Python](python/README.md)
-  * [Scikit-learn](python/scikit-learn/README.md)
+* [Python](python/README.md):
+  * [Scikit-learn](python/scikit-learn/README.md):
     * [Classification](python/scikit-learn/classification.ipynb)
