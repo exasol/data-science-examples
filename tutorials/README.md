@@ -1,5 +1,5 @@
 ## Tutorials
-This section contains tutorials which show complete data science workflows on a realistc scenario and data. We are going to provide examples for different languages, frameworks, tasks and use cases.
+This section contains tutorials which show complete data science workflows on a realistic scenario and data. We are going to provide examples for different languages, frameworks, tasks and use cases.
 
 For general prerequisites please refer to [Prerequisites](../README.md).
 
