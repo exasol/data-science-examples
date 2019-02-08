@@ -11,4 +11,4 @@ This section contains tutorials with the Python Programming Language. We are goi
 
 ### Prerequisites
 
-For general prerequisites please refer to [Prerequisites](../README.md). However, these tutorials typically need a specific flavor of the [Script Language Container](https://github.com/exasol/script-languages) which have the required dependencies installed. For these purposes, we provide the python3-ds-* flavors which already contain the dependencies for the frameworks used in these tutorials. Prepackaged releases for this flavor can be found on the [release page](https://github.com/exasol/script-languages/releases).
+For general prerequisites please refer to [Prerequisites](../README.md). However, these tutorials typically need a specific flavor of the [Script Language Container](https://github.com/exasol/script-languages) which has the required dependencies installed. For these purposes, we provide the python3-ds-* flavors which already contain the dependencies for the frameworks used in these tutorials. Prepackaged releases for this flavor can be found on the [release page](https://github.com/exasol/script-languages/releases).
