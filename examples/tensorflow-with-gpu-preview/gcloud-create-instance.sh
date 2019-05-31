@@ -7,5 +7,5 @@ gcloud compute instances create test \
 --boot-disk-type=pd-standard  \
 --maintenance-policy=TERMINATE  \
 --scopes=bigquery,storage-ro,storage-rw  \
-
---metadata=startup-script-url=<URL>
+--network exasol-integration-demo \
+--metadata=startup-script-url=https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/gcloud-setup.sh
