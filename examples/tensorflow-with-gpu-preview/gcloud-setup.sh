@@ -1,3 +1,7 @@
+#!/bin/bash
+
+set -x -e -o pipefail -u
+
 ##### Install Nvidia Driver #####
 curl -o NVIDIA-Linux-x86_64-410.104.run http://de.download.nvidia.com/tesla/410.104/NVIDIA-Linux-x86_64-410.104.run
 chmod +x NVIDIA-Linux-x86_64-410.104.run
