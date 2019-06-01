@@ -68,9 +68,9 @@ sudo docker run --runtime=nvidia --rm nvidia/cuda:9.0-base nvidia-smi
 wget https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/EXAConf
 sudo mkdir -p /exa/{etc,data/storage}
 sudo cp EXAConf /exa/etc/EXAConf
-SIZE="$((40*1073741824))"
-sudo dd if=/dev/zero of=/exa/data/storage/dev.1.data bs=1 count=1 seek=$SIZE
-sudo touch /exa/data/storage/dev.1.meta
+SIZE="$((45*1073741824))"
+sudo dd if=/dev/zero of=/exa/data/storage/dev.1 bs=1 count=1 seek=$SIZE
+sudo chmod +rw /exa
 sudo nvidia-docker run --name exasoldb -p 8888:8888 -p 6583:6583 -v /exa:/exa --detach --privileged --stop-timeout 120 exasol/docker-db
 
 ##### Python #####
