@@ -1,4 +1,6 @@
 gcloud compute instances create test \
+--custom-memory=10GB  \
+--custom-cpu=8  \
 --accelerator=count=1,type=nvidia-tesla-v100  \
 --boot-disk-auto-delete  \
 --boot-disk-size=50GB  \
