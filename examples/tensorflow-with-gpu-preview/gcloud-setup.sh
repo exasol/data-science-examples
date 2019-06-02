@@ -78,10 +78,10 @@ sudo apt-get -y install python3-pip
 sudo pip3 install pyexasol
 
 #### Download scripts ####
-wget https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/system_status.sh
-sudo cp system_status.sh /
+wget https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/system-status.sh
+sudo cp system-status.sh /
 
 #### Finish Setup #####
 sleep 180 # Wait for database to startup
-sudo bash -x system_status.sh &> status.log
+sudo bash -x /system-status.sh &> status.log
 sudo cat /setup_finished
