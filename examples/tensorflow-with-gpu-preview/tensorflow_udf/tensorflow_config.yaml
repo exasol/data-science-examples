@@ -28,3 +28,4 @@ profile: true
 device: "/device:GPU:0" # "/cpu:0"
 model_load_bucketfs_path:
 model_save_bucketfs_url: "http://w@write:localhost:6583/default/tensorflow/save"
+model_temporary_save_path: "save" # UDF need to write to /tmp

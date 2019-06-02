@@ -22,7 +22,7 @@ class TensorflowUDF():
         net = Dense(100, activation='relu')(net)
         return net
 
-    def read_config(self):
+    def read_config(self,exa):
         config_file_url = exa.meta.get_connection(self.CONNECTION_NAME).address
         url_data = urllib.parse.urlparse(config_file_url)
         config_file = urllib.parse.unquote(url_data.path)
@@ -30,14 +30,14 @@ class TensorflowUDF():
             config = yaml.load(file, yaml.Loader)
         return config
 
-    def run(self, ctx):
+    def run(self, ctx, exa):
         session_config = tf.ConfigProto(
             allow_soft_placement=True,
             log_device_placement=False)
         session = tf.Session(config=session_config)
         tf.keras.backend.set_session(session)
 
-        config = self.read_config()
+        config = self.read_config(exa)
         batch_size = config["batch_size"]
         epochs = config["epochs"]
         steps_per_epoch = ctx.size() // batch_size
@@ -47,8 +47,9 @@ class TensorflowUDF():
         if "model_bucketfs_load_path" in config:
             load_path = config["model_bucketfs_load_path"]
         save_url = config["model_save_bucketfs_url"]
-        save_path = "save/save"
-        dataset = DatasetUtils().create_generator_dataset(ctx, epochs, batch_size, use_cache)
+        save_path = config["model_temporary_save_path"]
+        dataset = DatasetUtils().create_generator_dataset(
+            ctx, epochs, batch_size, use_cache, exa.meta.input_columns)
 
         with tf.device(config["device"]):
             input_columns, keras_inputs, preprocessed_keras_inputs = \
@@ -79,7 +80,7 @@ class TensorflowUDF():
 
             model = Model(inputs=keras_inputs, outputs=keras_outputs)
             profile = config["profile"]
-            profile_model_options = Utils().add_profiler(callbacks, profile, session)
+            profile_model_options = Utils().add_profiler(callbacks, profile, session, save_path)
             model.compile(optimizer='rmsprop', loss=losses, loss_weights=loss_weights,
                           **profile_model_options)
             print(model.summary())
@@ -88,8 +89,9 @@ class TensorflowUDF():
                 history = model.fit(dataset_iterator, steps_per_epoch=steps_per_epoch,
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch, )
-                subprocess.check_output("tar -czf save.tar.gz save", shell=True)
-                with open("save.tar.gz", "rb") as f:
+                tarfile = f"{save_path}/save.tar.gz"
+                subprocess.check_output(f"tar --exclude {tarfile} -czf {tarfile} {save_path}", shell=True)
+                with open(tarfile, "rb") as f:
                     requests.put(save_url, data=f)
                 ctx.emit(str(history.history))
             else:
