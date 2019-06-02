@@ -3,6 +3,8 @@
 set -x -e -o pipefail -u
 
 ##### Install Nvidia Driver #####
+sudo echo "Install Nvidia Driver" >> /setup.log 
+
 curl -o NVIDIA-Linux-x86_64-410.104.run http://de.download.nvidia.com/tesla/410.104/NVIDIA-Linux-x86_64-410.104.run
 chmod +x NVIDIA-Linux-x86_64-410.104.run
 sudo apt-get update
@@ -37,6 +39,8 @@ sudo chmod +x /usr/local/bin/donkey /usr/local/bin/extract-vmlinux
 ./NVIDIA-Linux-x86_64-410.104.run --silent
 
 #### Install Docker #####
+sudo echo "Install Docker" >> /setup.log
+
 sudo apt-get install -y --no-install-recommends \
         apt-transport-https \
         ca-certificates \
@@ -52,6 +56,8 @@ sudo apt-get install -y --no-install-recommends docker-ce docker-ce-cli containe
 sudo docker run hello-world
 
 #### Nvidia Docker ######
+sudo echo "Install Nvidia Docker" >> /setup.log
+
 # Add the package repositories
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
@@ -64,7 +70,9 @@ sudo pkill -SIGHUP dockerd
 # Test nvidia-smi with the latest official CUDA image
 sudo docker run --runtime=nvidia --rm nvidia/cuda:9.0-base nvidia-smi
 
-##### Exasol #####
+##### Install Exasol #####
+sudo echo "Install Exasol" >> /setup.log
+
 wget https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/EXAConf
 sudo mkdir -p /exa/{etc,data/storage}
 sudo cp EXAConf /exa/etc/EXAConf
@@ -73,15 +81,23 @@ sudo dd if=/dev/zero of=/exa/data/storage/dev.1 bs=1 count=1 seek=$SIZE
 sudo chmod +rw /exa
 sudo nvidia-docker run --name exasoldb -p 8888:8888 -p 6583:6583 -v /exa:/exa --detach --privileged --stop-timeout 120 --restart always exasol/docker-db
 
-##### Python #####
+##### Install Python #####
+sudo echo "Install Python" >> /setup.log
+
 sudo apt-get -y install python3-pip
 sudo pip3 install pyexasol
 
 #### Download scripts ####
+sudo echo "Download scripts" >> /setup.log
+
 wget https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/system-status.sh
 sudo cp system-status.sh /
 
 #### Finish Setup #####
+sudo echo "Wait for Exasol" >> /setup.log
+
 sleep 180 # Wait for database to startup
 sudo bash -x /system-status.sh &> status.log
-sudo cat /setup_finished
+sudo cp status.log /
+
+sudo echo "Finished" >> /setup.log
