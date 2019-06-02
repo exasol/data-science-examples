@@ -1,4 +1,6 @@
-gcloud compute instances create test \
+NAME=$1
+shift
+gcloud compute instances create $NAME \
 --custom-memory=10GB  \
 --custom-cpu=8  \
 --accelerator=count=1,type=nvidia-tesla-k80  \
