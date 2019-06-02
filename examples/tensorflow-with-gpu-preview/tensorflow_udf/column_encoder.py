@@ -6,8 +6,8 @@ import tensorflow as tf
 from tensorflow.python.keras import Input
 from tensorflow.python.keras.layers import Dense
 
-from udf.tensorflow.identity_feature_column import identity_column
-from udf.tensorflow.keras_layer import TFHubTextLayer
+from identity_feature_column import identity_column
+from keras_layer import TFHubTextLayer
 
 
 class ColumnEncoder:

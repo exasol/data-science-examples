@@ -1,7 +1,4 @@
-from udf.mock.udf_test_mock import exa
-
-# =================================================================
-
+import subprocess
 import urllib.parse
 
 import tensorflow as tf
@@ -9,9 +6,11 @@ import yaml
 from tensorflow.python.keras.engine.training import Model
 from tensorflow.python.keras.layers import Dense, Concatenate
 
-from udf.tensorflow.column_encoder import ColumnEncoder
-from udf.tensorflow.dataset_utils import DatasetUtils
-from udf.tensorflow.utils import Utils
+from column_encoder import ColumnEncoder
+from dataset_utils import DatasetUtils
+from utils import Utils
+
+import requests
 
 
 class TensorflowUDF():
@@ -44,10 +43,14 @@ class TensorflowUDF():
         steps_per_epoch = ctx.size() // batch_size
         use_cache = config["use_cache"]
         train = config["train"]
+        load_path = None
+        if "model_bucketfs_load_path" in config:
+            load_path = config["model_bucketfs_load_path"]
+        save_url = config["model_save_bucketfs_url"]
         save_path = "save/save"
         dataset = DatasetUtils().create_generator_dataset(ctx, epochs, batch_size, use_cache)
 
-        with tf.device("/gpu:0"):
+        with tf.device(config["device"]):
             input_columns, keras_inputs, preprocessed_keras_inputs = \
                 ColumnEncoder().generate_inputs(
                     exa.meta.input_columns, config["columns"])
@@ -68,7 +71,10 @@ class TensorflowUDF():
             session.run(dataset_iterator.initializer)
 
             saver = tf.train.Saver()
-            initial_epoch = Utils().restore_model_and_get_inital_epoch(session, saver, save_path)
+            if load_path is not None:
+                initial_epoch = Utils().restore_model_and_get_inital_epoch(session, saver, load_path)
+            else:
+                initial_epoch = 0
             callbacks = Utils().create_callbacks(session, saver, save_path)
 
             model = Model(inputs=keras_inputs, outputs=keras_outputs)
@@ -82,6 +88,9 @@ class TensorflowUDF():
                 history = model.fit(dataset_iterator, steps_per_epoch=steps_per_epoch,
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch, )
+                subprocess.check_output("tar -czf save.tar.gz save", shell=True)
+                with open("save.tar.gz", "rb") as f:
+                    requests.put(save_url, data=f)
                 ctx.emit(str(history.history))
             else:
                 for i in range(steps_per_epoch):

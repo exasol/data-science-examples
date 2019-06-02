@@ -2,9 +2,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.feature_column.feature_column import input_layer
 
-from udf.mock.udf_test_mock import exa
-
-
 class DatasetUtils:
 
     def generator(self, ctx, epochs: int, batch_size: int, use_cache: bool):
@@ -20,11 +17,11 @@ class DatasetUtils:
             if not use_cache:
                 ctx.reset()
 
-    def create_generator_dataset(self, ctx, epochs: int, batch_size: int, use_cache: bool):
+    def create_generator_dataset(self, ctx, epochs: int, batch_size: int, use_cache: bool, input_columns):
         ds = tf.data.Dataset.from_generator(
             lambda: self.generator(ctx, epochs, batch_size, use_cache),
-            {column.name: np.dtype(column.type) for column in exa.meta.input_columns},
-            {column.name: tf.TensorShape([None]) for column in exa.meta.input_columns}
+            {column.name: np.dtype(column.type) for column in input_columns},
+            {column.name: tf.TensorShape([None]) for column in input_columns}
         )
         return ds
 

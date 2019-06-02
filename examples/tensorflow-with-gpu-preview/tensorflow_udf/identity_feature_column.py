@@ -1,11 +1,11 @@
-from tensorflow.python import tf_export, dtypes, collections, deprecation, math_ops, tensor_shape
-from tensorflow.python.feature_column.feature_column_v2 import _check_shape, _check_default_value, \
-    _assert_key_is_string, DenseColumn, _FEATURE_COLUMN_DEPRECATION_DATE, _FEATURE_COLUMN_DEPRECATION, \
-    _check_config_keys
-from tensorflow.python.keras import utils
-from tensorflow.python.ops import parsing_ops
-from tensorflow.python.framework import sparse_tensor as sparse_tensor_lib
+from tensorflow.python import tf_export, dtypes, collections, deprecation, tensor_shape
 from tensorflow.python.feature_column import feature_column as fc_old
+from tensorflow.python.feature_column.feature_column_v2 import _check_shape, _assert_key_is_string, DenseColumn, \
+    _FEATURE_COLUMN_DEPRECATION_DATE, _FEATURE_COLUMN_DEPRECATION, \
+    _check_config_keys
+from tensorflow.python.framework import sparse_tensor as sparse_tensor_lib
+from tensorflow.python.ops import parsing_ops
+
 
 @tf_export('feature_column.identity_column')
 def identity_column(key,
@@ -13,10 +13,7 @@ def identity_column(key,
                     dtype=dtypes.string, ):
     shape = _check_shape(shape, key)
     _assert_key_is_string(key)
-    return IdentityColumn(
-        key,
-        shape=shape,
-        dtype=dtype)
+    return IdentityColumn(key,shape=shape,dtype=dtype)
 
 
 class IdentityColumn(
