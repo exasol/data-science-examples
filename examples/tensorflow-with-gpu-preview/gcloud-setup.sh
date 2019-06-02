@@ -71,8 +71,17 @@ sudo cp EXAConf /exa/etc/EXAConf
 SIZE="$((45*1073741824))"
 sudo dd if=/dev/zero of=/exa/data/storage/dev.1 bs=1 count=1 seek=$SIZE
 sudo chmod +rw /exa
-sudo nvidia-docker run --name exasoldb -p 8888:8888 -p 6583:6583 -v /exa:/exa --detach --privileged --stop-timeout 120 exasol/docker-db
+sudo nvidia-docker run --name exasoldb -p 8888:8888 -p 6583:6583 -v /exa:/exa --detach --privileged --stop-timeout 120 --restart always exasol/docker-db
 
 ##### Python #####
 sudo apt-get -y install python3-pip
 sudo pip3 install pyexasol
+
+#### Download scripts ####
+wget https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/system_status.sh
+sudo cp system_status.sh /
+
+#### Finish Setup #####
+sleep 180 # Wait for database to startup
+sudo bash -x system_status.sh &> status.log
+sudo cat /setup_finished
