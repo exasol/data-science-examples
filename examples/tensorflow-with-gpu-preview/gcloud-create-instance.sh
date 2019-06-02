@@ -5,7 +5,7 @@ gcloud compute instances create $NAME \
 --custom-cpu=8  \
 --accelerator=count=1,type=nvidia-tesla-k80  \
 --boot-disk-auto-delete  \
---boot-disk-size=50GB  \
+--boot-disk-size=150GB  \
 --image=projects/ubuntu-os-cloud/global/images/ubuntu-1804-bionic-v20190514  \
 --boot-disk-type=pd-standard  \
 --maintenance-policy=TERMINATE  \
