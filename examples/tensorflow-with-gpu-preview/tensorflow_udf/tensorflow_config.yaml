@@ -21,7 +21,6 @@ columns:
       hash_bucket_size: 100
       embedding_dimensions: 100
 use_cache: false
-train: true
 batch_size: 100
 epochs: 5
 profile: true

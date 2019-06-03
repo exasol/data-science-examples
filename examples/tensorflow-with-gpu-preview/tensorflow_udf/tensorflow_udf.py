@@ -30,7 +30,7 @@ class TensorflowUDF():
             config = yaml.load(file, yaml.Loader)
         return config
 
-    def run(self, ctx, exa):
+    def run(self, ctx, exa, train:bool):
         session_config = tf.ConfigProto(
             allow_soft_placement=True,
             log_device_placement=False)
@@ -42,7 +42,6 @@ class TensorflowUDF():
         epochs = config["epochs"]
         steps_per_epoch = ctx.size() // batch_size
         use_cache = config["use_cache"]
-        train = config["train"]
         load_path = None
         if "model_bucketfs_load_path" in config:
             load_path = config["model_bucketfs_load_path"]
