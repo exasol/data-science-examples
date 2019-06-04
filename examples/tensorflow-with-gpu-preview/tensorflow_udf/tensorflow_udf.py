@@ -85,6 +85,7 @@ class TensorflowUDF():
             model = Model(inputs=keras_inputs, outputs=keras_outputs)
             profile = config["profile"]
             profile_model_options = Utils().add_profiler(callbacks, profile, session, save_path)
+            print(output_metrics)
             model.compile(optimizer='rmsprop', loss=losses, loss_weights=loss_weights, metrics=output_metrics,
                           **profile_model_options)
             print(model.summary(),flush=True)

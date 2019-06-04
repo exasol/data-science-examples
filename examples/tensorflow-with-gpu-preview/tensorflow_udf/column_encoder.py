@@ -61,14 +61,14 @@ class ColumnEncoder:
         indicator_feature_column = tf.feature_column.indicator_column(feature_column)
         keras_output = Dense(hash_bucket_size, activation='relu', name="output_" + column.name)(net)
         loss = ("output_%s" % column.name, 'categorical_crossentropy', 1)
-        output_metrics = ("output_%s" % column.name, metrics.CategoricalAccuracy)
+        output_metrics = ("output_%s" % column.name, "categorical_accuracy")
         return indicator_feature_column, keras_output, loss, output_metrics
 
     def generate_numeric_output(self, column, net, column_config: Dict):
         feature_column = self.get_numeric_column(column, column_config)
         keras_output = Dense(1, name="output_" + column.name)(net)
         loss = ("output_%s" % column.name, 'mean_squared_error', 1)
-        output_metrics = ("output_%s" % column.name, metrics.mae)
+        output_metrics = ("output_%s" % column.name, 'mae')
         return feature_column, keras_output, loss, output_metrics
 
     def generate_input_feature_columns(self, input_columns, config: Dict):
@@ -93,6 +93,7 @@ class ColumnEncoder:
                         (column.type == int or column.type == int):
                     yield self.generate_categorical_output(column, net, column_config)
                 elif column_config["type"] == "float" and column.type == float:
+                    yield self.generate_numeric_output(column, net, column_config)
                     yield self.generate_numeric_output(column, net, column_config)
                 else:
                     raise Exception("Unsupported Type")
