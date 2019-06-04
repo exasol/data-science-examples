@@ -45,7 +45,9 @@ class TensorflowUDF():
         load_path = None
         if "model_bucketfs_load_path" in config:
             load_path = config["model_bucketfs_load_path"]
-        save_url = config["model_save_bucketfs_url"]
+        save_url = None
+        if "model_save_bucketfs_url" in config:
+            save_url = config["model_save_bucketfs_url"]
         save_path = config["model_temporary_save_path"]
         dataset = DatasetUtils().create_generator_dataset(
             ctx, epochs, batch_size, use_cache, exa.meta.input_columns)
@@ -89,13 +91,15 @@ class TensorflowUDF():
                 history = model.fit(dataset_iterator, steps_per_epoch=steps_per_epoch,
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch, )
-                tarfile = f"/tmp/save.tar.gz"
-                try:
-                    self.tar_save(save_path, tarfile)
-                    self.upload_save(save_url, tarfile)
-                finally:
-                    os.remove(tarfile)
                 ctx.emit(str(history.history))
+                if save_url is not None:
+                    tarfile = f"/tmp/save.tar.gz"
+                    try:
+                        self.tar_save(save_path, tarfile)
+                        self.upload_save(save_url, tarfile)
+                    finally:
+                        os.remove(tarfile)
+
             else:
                 print("Starting prediction",flush=True)
                 for i in range(steps_per_epoch):
