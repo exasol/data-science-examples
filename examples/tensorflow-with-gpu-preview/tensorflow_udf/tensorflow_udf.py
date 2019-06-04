@@ -82,22 +82,33 @@ class TensorflowUDF():
             profile_model_options = Utils().add_profiler(callbacks, profile, session, save_path)
             model.compile(optimizer='rmsprop', loss=losses, loss_weights=loss_weights,
                           **profile_model_options)
-            print(model.summary())
+            print(model.summary(),flush=True)
 
             if train:
+                print("Starting training",flush=True)
                 history = model.fit(dataset_iterator, steps_per_epoch=steps_per_epoch,
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch, )
                 tarfile = f"{save_path}/save.tar.gz"
-                try:
-                    subprocess.check_output(f"tar --exclude {tarfile} -czf {tarfile} {save_path}", shell=True)
-                except subprocess.CalledProcessError as e:
-                    print(e)
-                    print(e.output,flush=True)
-                with open(tarfile, "rb") as f:
-                    requests.put(save_url, data=f)
+                self.tar_save(save_path, tarfile)
+                self.upload_save(save_url, tarfile)
                 ctx.emit(str(history.history))
             else:
+                print("Starting prediction",flush=True)
                 for i in range(steps_per_epoch):
+                    print(f"Predicting Batch {i}/steps_per_epoch",flush=True)
                     output = model.predict(dataset_iterator, steps=1)
                     ctx.emit(output)
+
+    def upload_save(self, save_url, tarfile):
+        print("Upload save", flush=True)
+        with open(tarfile, "rb") as f:
+            requests.put(save_url, data=f)
+
+    def tar_save(self, save_path, tarfile):
+        print("Tar save",flush=True)
+        try:
+            subprocess.check_output(f"tar --exclude {tarfile} -czf {tarfile} {save_path}", shell=True)
+        except subprocess.CalledProcessError as e:
+            print(e)
+            print(e.output, flush=True)
