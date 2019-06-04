@@ -98,7 +98,7 @@ class TensorflowUDF():
                 ctx.emit(str(history.history))
                 print("save_url", save_url)
                 if save_url != "" and save_url is not None:
-                    tarfile = f"/tmp/save.tar.gz"
+                    tarfile = f"/tmp/save.tar"
                     try:
                         self.tar_save(save_path, tarfile)
                         self.upload_save(save_url, tarfile)
@@ -120,7 +120,7 @@ class TensorflowUDF():
     def tar_save(self, save_path, tarfile):
         print("Tar save",flush=True)
         try:
-            subprocess.check_output(f"tar -czf {tarfile} {save_path}", shell=True)
+            subprocess.check_output(f"tar -cf {tarfile} {save_path}", shell=True)
         except subprocess.CalledProcessError as e:
             print(e)
             print(e.output, flush=True)
