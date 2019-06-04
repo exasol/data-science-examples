@@ -73,7 +73,7 @@ class TensorflowUDF():
             session.run(dataset_iterator.initializer)
 
             saver = tf.train.Saver()
-            if load_path is not None:
+            if load_path is not None and load_path != "":
                 initial_epoch = Utils().restore_model_and_get_inital_epoch(session, saver, load_path)
             else:
                 initial_epoch = 0
@@ -92,7 +92,7 @@ class TensorflowUDF():
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch, )
                 ctx.emit(str(history.history))
-                if save_url is not None:
+                if save_url != "" and save_url is not None:
                     tarfile = f"/tmp/save.tar.gz"
                     try:
                         self.tar_save(save_path, tarfile)
