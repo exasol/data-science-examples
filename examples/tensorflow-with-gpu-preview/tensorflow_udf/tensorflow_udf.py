@@ -28,6 +28,8 @@ class TensorflowUDF():
         config_file = urllib.parse.unquote(url_data.path)
         with open(config_file) as file:
             config = yaml.load(file, yaml.Loader)
+        with open(config_file) as file:
+            print(file.read())
         return config
 
     def run(self, ctx, exa, train:bool):
@@ -73,6 +75,7 @@ class TensorflowUDF():
             session.run(dataset_iterator.initializer)
 
             saver = tf.train.Saver()
+            print("load_path",load_path)
             if load_path is not None and load_path != "":
                 initial_epoch = Utils().restore_model_and_get_inital_epoch(session, saver, load_path)
             else:
@@ -92,6 +95,7 @@ class TensorflowUDF():
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch, )
                 ctx.emit(str(history.history))
+                print("save_url", save_url)
                 if save_url != "" and save_url is not None:
                     tarfile = f"/tmp/save.tar.gz"
                     try:
