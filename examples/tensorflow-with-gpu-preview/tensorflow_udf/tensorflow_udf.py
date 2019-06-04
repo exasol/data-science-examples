@@ -1,6 +1,8 @@
+import os
 import subprocess
 import urllib.parse
 
+import requests
 import tensorflow as tf
 import yaml
 from tensorflow.python.keras.engine.training import Model
@@ -9,8 +11,6 @@ from tensorflow.python.keras.layers import Dense, Concatenate
 from column_encoder import ColumnEncoder
 from dataset_utils import DatasetUtils
 from utils import Utils
-
-import requests
 
 
 class TensorflowUDF():
@@ -89,9 +89,12 @@ class TensorflowUDF():
                 history = model.fit(dataset_iterator, steps_per_epoch=steps_per_epoch,
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch, )
-                tarfile = f"{save_path}/save.tar.gz"
-                self.tar_save(save_path, tarfile)
-                self.upload_save(save_url, tarfile)
+                tarfile = f"/tmp/save.tar.gz"
+                try:
+                    self.tar_save(save_path, tarfile)
+                    self.upload_save(save_url, tarfile)
+                finally:
+                    os.remove(tarfile)
                 ctx.emit(str(history.history))
             else:
                 print("Starting prediction",flush=True)
@@ -108,7 +111,7 @@ class TensorflowUDF():
     def tar_save(self, save_path, tarfile):
         print("Tar save",flush=True)
         try:
-            subprocess.check_output(f"tar --exclude {tarfile} -czf {tarfile} {save_path}", shell=True)
+            subprocess.check_output(f"tar -czf {tarfile} {save_path}", shell=True)
         except subprocess.CalledProcessError as e:
             print(e)
             print(e.output, flush=True)
