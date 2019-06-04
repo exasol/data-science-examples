@@ -89,7 +89,11 @@ class TensorflowUDF():
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch, )
                 tarfile = f"{save_path}/save.tar.gz"
-                subprocess.check_output(f"tar --exclude {tarfile} -czf {tarfile} {save_path}", shell=True)
+                try:
+                    subprocess.check_output(f"tar --exclude {tarfile} -czf {tarfile} {save_path}", shell=True)
+                except subprocess.CalledProcessError as e:
+                    print(e)
+                    print(e.output,flush=True)
                 with open(tarfile, "rb") as f:
                     requests.put(save_url, data=f)
                 ctx.emit(str(history.history))
