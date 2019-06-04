@@ -73,7 +73,7 @@ class ColumnEncoder:
             if column.name in config:
                 column_config = config[column.name]
                 if column_config["type"] == "categorical" and \
-                        (column.type == int or column.type == int):
+                        (column.type == int or column.type == str):
                     yield self.generate_categorical_input(column, column_config)
                 elif column_config["type"] == "float" and column.type == float:
                     yield self.generate_numeric_input(column, column_config)
