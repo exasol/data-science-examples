@@ -59,7 +59,7 @@ class TensorflowUDF():
                 ColumnEncoder().generate_inputs(
                     exa.meta.input_columns, config["columns"])
             table_network = self.create_table_network(preprocessed_keras_inputs)
-            output_columns, keras_outputs, losses, loss_weights = \
+            output_columns, keras_outputs, losses, loss_weights, output_metrics = \
                 ColumnEncoder().generate_outputs(
                     exa.meta.input_columns, table_network, config["columns"])
             session.run(tf.tables_initializer())
@@ -85,7 +85,7 @@ class TensorflowUDF():
             model = Model(inputs=keras_inputs, outputs=keras_outputs)
             profile = config["profile"]
             profile_model_options = Utils().add_profiler(callbacks, profile, session, save_path)
-            model.compile(optimizer='rmsprop', loss=losses, loss_weights=loss_weights,
+            model.compile(optimizer='rmsprop', loss=losses, loss_weights=loss_weights, metrics=output_metrics,
                           **profile_model_options)
             print(model.summary(),flush=True)
 
@@ -93,7 +93,7 @@ class TensorflowUDF():
                 print("Starting training",flush=True)
                 history = model.fit(dataset_iterator, steps_per_epoch=steps_per_epoch,
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
-                                    initial_epoch=initial_epoch, )
+                                    initial_epoch=initial_epoch )
                 ctx.emit(str(history.history))
                 print("save_url", save_url)
                 if save_url != "" and save_url is not None:

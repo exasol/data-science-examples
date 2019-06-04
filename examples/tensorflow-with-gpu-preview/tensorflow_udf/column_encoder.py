@@ -3,6 +3,7 @@ from typing import Dict, Tuple, List
 
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.keras import metrics
 from tensorflow.python.keras import Input
 from tensorflow.python.keras.layers import Dense
 
@@ -60,13 +61,16 @@ class ColumnEncoder:
         indicator_feature_column = tf.feature_column.indicator_column(feature_column)
         keras_output = Dense(hash_bucket_size, activation='relu', name="output_" + column.name)(net)
         loss = ("output_%s" % column.name, 'categorical_crossentropy', 1)
-        return indicator_feature_column, keras_output, loss
+        output_metrics = ("output_%s" % column.name, [metrics.CategoricalAccuracy,
+                                                      metrics.Precision, metrics.Recall])
+        return indicator_feature_column, keras_output, loss, output_metrics
 
     def generate_numeric_output(self, column, net, column_config: Dict):
         feature_column = self.get_numeric_column(column, column_config)
         keras_output = Dense(1, name="output_" + column.name)(net)
         loss = ("output_%s" % column.name, 'mean_squared_error', 1)
-        return feature_column, keras_output, loss
+        output_metrics = ("output_%s" % column.name, [metrics.mae])
+        return feature_column, keras_output, loss, output_metrics
 
     def generate_input_feature_columns(self, input_columns, config: Dict):
         for column in input_columns:
@@ -105,13 +109,14 @@ class ColumnEncoder:
         return input_columns, keras_inputs, preprocessed_keras_inputs
 
     def generate_outputs(self, input_columns, net, config: Dict) -> \
-            Tuple[List, List, Dict, Dict]:
+            Tuple[List, List, Dict, Dict, Dict]:
         outputs = config["output"]
         output_columns = [column
                           for column in input_columns
                           if column.name in outputs]
         output_feature_columns = list(self.generate_output_feature_columns(output_columns, net, outputs))
-        output_columns, keras_outputs, losses = zip(*output_feature_columns)
+        output_columns, keras_outputs, losses, output_metrics = zip(*output_feature_columns)
         loss_weights = {name: weight for name, loss, weight in losses}
         losses = {name: loss for name, loss, weight in losses}
-        return output_columns, keras_outputs, losses, loss_weights
+        output_metrics = {name: metrics for name, metrics in output_metrics}
+        return output_columns, keras_outputs, losses, loss_weights, output_metrics
