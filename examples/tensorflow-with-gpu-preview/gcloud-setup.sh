@@ -85,8 +85,7 @@ set -x -e -o pipefail -u
   sudo echo "Install Python" >> /setup.log
 
   sudo apt-get -y install python3-pip
-  sudo pip3 install pyexasol
-
+  sudo pip3 install pyexasol tensorboard tensorflow
   #### Download scripts ####
   sudo echo "Download scripts" >> /setup.log
 
