@@ -8,7 +8,8 @@ set -x -e -o pipefail -u
   curl -o NVIDIA-Linux-x86_64-410.104.run http://de.download.nvidia.com/tesla/410.104/NVIDIA-Linux-x86_64-410.104.run
   chmod +x NVIDIA-Linux-x86_64-410.104.run
   sudo apt-get update
-  sudo apt-get install -y --no-install-recommends \
+  sudo DEBIAN_FRONTEND=noninteractive \
+        apt-get install -yq --no-install-recommends \
                             cpp=4:7.3.0-3ubuntu2 \
                             cpp-7=7.3.0-16ubuntu3 \
                             g++=4:7.3.0-3ubuntu2 \
@@ -25,7 +26,8 @@ set -x -e -o pipefail -u
                     libcilkrts5 libgcc-7-dev libstdc++-7-dev libubsan0
   sudo dpkg --add-architecture i386
   sudo apt-get update
-  sudo apt-get install -y --no-install-recommends \
+  sudo DEBIAN_FRONTEND=noninteractive \
+        apt-get install -yq --no-install-recommends \
                           apt-utils \
                           build-essential \
                           ca-certificates \
@@ -41,7 +43,8 @@ set -x -e -o pipefail -u
   #### Install Docker #####
   sudo echo "Install Docker" >> /setup.log
 
-  sudo apt-get install -y --no-install-recommends \
+  sudo DEBIAN_FRONTEND=noninteractive \
+        apt-get install -yq --no-install-recommends \
           apt-transport-https \
           ca-certificates \
           curl \
@@ -52,7 +55,8 @@ set -x -e -o pipefail -u
   sudo add-apt-repository \
     "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   sudo apt-get update
-  sudo apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
+  sudo DEBIAN_FRONTEND=noninteractive \
+        apt-get install -yq --no-install-recommends docker-ce docker-ce-cli containerd.io
   sudo docker run hello-world
 
   #### Nvidia Docker ######
@@ -65,7 +69,8 @@ set -x -e -o pipefail -u
     sudo tee /etc/apt/sources.list.d/nvidia-docker.list
   sudo apt-get update
   # Install nvidia-docker2 and reload the Docker daemon configuration
-  sudo apt-get install -y nvidia-docker2
+  sudo DEBIAN_FRONTEND=noninteractive \
+        apt-get install -yq --no-install-recommends nvidia-docker2
   sudo pkill -SIGHUP dockerd
   # Test nvidia-smi with the latest official CUDA image
   sudo docker run --runtime=nvidia --rm nvidia/cuda:9.0-base nvidia-smi
@@ -84,7 +89,8 @@ set -x -e -o pipefail -u
   ##### Install Python #####
   sudo echo "Install Python" >> /setup.log
 
-  sudo apt-get -y install python3-pip
+  sudo DEBIAN_FRONTEND=noninteractive \
+        apt-get install -yq --no-install-recommends python3-pip
   sudo pip3 install pyexasol tensorboard tensorflow
   #### Download scripts ####
   sudo echo "Download scripts" >> /setup.log
