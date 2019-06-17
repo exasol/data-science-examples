@@ -90,7 +90,7 @@ set -x -e -o pipefail -u
   sudo echo "Install Python" >> /setup.log
 
   sudo DEBIAN_FRONTEND=noninteractive \
-        apt-get install -yq --no-install-recommends python3-pip
+        apt-get install -yq python3-pip
   sudo pip3 install pyexasol tensorboard tensorflow
   #### Download scripts ####
   sudo echo "Download scripts" >> /setup.log
