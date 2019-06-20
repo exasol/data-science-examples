@@ -98,12 +98,10 @@ class TensorflowUDF():
                 ctx.emit(str(history.history))
                 print("save_url", save_url)
                 if save_url != "" and save_url is not None:
-                    tarfile = f"/tmp/save.tar"
-                    try:
-                        self.tar_save(save_path, tarfile)
-                        self.upload_save(save_url, tarfile)
-                    finally:
-                        os.remove(tarfile)
+                    tarfile = f"/tmp/save"
+                    os.makedirs(tarfile,exist_ok=True)
+                    self.tar_save(save_path, tarfile)
+                    self.upload_save(save_url, tarfile)
 
             else:
                 print("Starting prediction",flush=True)
@@ -114,13 +112,16 @@ class TensorflowUDF():
 
     def upload_save(self, save_url, tarfile):
         print("Upload save", flush=True)
-        with open(tarfile, "rb") as f:
-            requests.put(save_url, data=f)
+        with open(f"{tarfile}/metrics.tar", "rb") as f:
+            requests.put(f"{save_url}/metrics.tar", data=f)
+        with open(f"{tarfile}/checkpoints.tar", "rb") as f:
+            requests.put(f"{save_url}/checkpoints.tar", data=f)
 
     def tar_save(self, save_path, tarfile):
         print("Tar save",flush=True)
         try:
-            subprocess.check_output(f"tar -cf {tarfile} {save_path}", shell=True)
+            subprocess.check_output(f"tar -czf {tarfile}/metrics.tar {save_path}/metrics", shell=True)
+            subprocess.check_output(f"tar -czf {tarfile}/checkpoints.tar {save_path}/checkpoints", shell=True)
         except subprocess.CalledProcessError as e:
             print(e)
             print(e.output, flush=True)
