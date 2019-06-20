@@ -39,7 +39,10 @@ set -x -e -o pipefail -u
   sudo curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux
   sudo chmod +x /usr/local/bin/donkey /usr/local/bin/extract-vmlinux
   ./NVIDIA-Linux-x86_64-410.104.run --silent
-
+  sudo curl https://raw.githubusercontent.com/NVIDIA/nvidia-persistenced/master/init/systemd/nvidia-persistenced.service.template | sed 's/__USER__/root/' > /etc/systemd/system/nvidia-persistenced.service
+  sudo systemctl enable nvidia-persistenced
+  sudo systemctl start nvidia-persistenced
+  
   #### Install Docker #####
   sudo echo "Install Docker" >> /setup.log
 
