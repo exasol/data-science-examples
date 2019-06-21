@@ -46,7 +46,7 @@ class TensorflowUDF():
         use_cache = config["use_cache"]
         load_path = None
         if "model_bucketfs_load_path" in config:
-            load_path = config["model_bucketfs_load_path"]
+            load_path = config["model_bucketfs_load_path"]+"checkpoints/tmp/save/checkpoints"
         save_url = None
         if "model_save_bucketfs_url" in config:
             save_url = config["model_save_bucketfs_url"]
@@ -74,7 +74,7 @@ class TensorflowUDF():
             dataset_iterator = dataset.make_initializable_iterator()
             session.run(dataset_iterator.initializer)
 
-            saver = tf.train.Saver()
+            saver = tf.train.Saver(max_to_keep=1)
             print("load_path",load_path)
             if load_path is not None and load_path != "":
                 initial_epoch = Utils().restore_model_and_get_inital_epoch(session, saver, load_path)
