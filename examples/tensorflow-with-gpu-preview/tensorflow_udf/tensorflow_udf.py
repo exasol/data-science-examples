@@ -45,8 +45,8 @@ class TensorflowUDF():
         steps_per_epoch = ctx.size() // batch_size
         use_cache = config["use_cache"]
         load_path = None
-        if "model_bucketfs_load_path" in config:
-            load_path = config["model_bucketfs_load_path"]+"checkpoints/tmp/save/checkpoints"
+        if "model_load_bucketfs_path" in config:
+            load_path = config["model_load_bucketfs_path"]+"/checkpoints/tmp/save"
         save_url = None
         if "model_save_bucketfs_url" in config:
             save_url = config["model_save_bucketfs_url"]
