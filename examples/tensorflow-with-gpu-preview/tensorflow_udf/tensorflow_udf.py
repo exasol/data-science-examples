@@ -74,7 +74,7 @@ class TensorflowUDF():
             dataset_iterator = dataset.make_initializable_iterator()
             session.run(dataset_iterator.initializer)
 
-            saver = tf.train.Saver(max_to_keep=1)
+            saver = tf.train.Saver(max_to_keep=1,save_relative_paths=True)
             print("load_path",load_path,flush=True)
             if load_path is not None and load_path != "":
                 initial_epoch = Utils().restore_model_and_get_inital_epoch(session, saver, load_path+"/checkpoints/tmp/save")
