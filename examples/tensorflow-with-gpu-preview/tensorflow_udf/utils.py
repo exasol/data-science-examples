@@ -43,9 +43,11 @@ class Utils:
             self, session: tf.Session,
             saver: tf.train.Saver,
             load_path: str):
+        print("load_path", load_path, flush=True)
         checkpoint_path = self.get_checkpoint_path(load_path)
+        print("checkpoint_path",checkpoint_path, flush=True)
         latest_checkpoint = tf.train.latest_checkpoint(checkpoint_path)
-        print("latest_checkpoint", latest_checkpoint)
+        print("latest_checkpoint", latest_checkpoint, flush=True)
         if latest_checkpoint is not None:
             saver.restore(session, latest_checkpoint)
             return int(pathlib.Path(latest_checkpoint).name)

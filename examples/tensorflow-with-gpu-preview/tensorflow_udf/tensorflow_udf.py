@@ -46,7 +46,7 @@ class TensorflowUDF():
         use_cache = config["use_cache"]
         load_path = None
         if "model_load_bucketfs_path" in config:
-            load_path = config["model_load_bucketfs_path"]+"/checkpoints/tmp/save"
+            load_path = config["model_load_bucketfs_path"]
         save_url = None
         if "model_save_bucketfs_url" in config:
             save_url = config["model_save_bucketfs_url"]
@@ -75,9 +75,9 @@ class TensorflowUDF():
             session.run(dataset_iterator.initializer)
 
             saver = tf.train.Saver(max_to_keep=1)
-            print("load_path",load_path)
+            print("load_path",load_path,flush=True)
             if load_path is not None and load_path != "":
-                initial_epoch = Utils().restore_model_and_get_inital_epoch(session, saver, load_path)
+                initial_epoch = Utils().restore_model_and_get_inital_epoch(session, saver, load_path+"/checkpoints/tmp/save")
             else:
                 initial_epoch = 0
             callbacks = Utils().create_callbacks(session, saver, save_path)
@@ -85,7 +85,7 @@ class TensorflowUDF():
             model = Model(inputs=keras_inputs, outputs=keras_outputs)
             profile = config["profile"]
             profile_model_options = Utils().add_profiler(callbacks, profile, session, save_path)
-            print(output_metrics)
+            print(output_metrics, flush=True)
             model.compile(optimizer='rmsprop', loss=losses, loss_weights=loss_weights, metrics=output_metrics,
                           **profile_model_options)
             print(model.summary(),flush=True)
@@ -96,7 +96,7 @@ class TensorflowUDF():
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch )
                 ctx.emit(str(history.history))
-                print("save_url", save_url)
+                print("save_url", save_url,flush=True)
                 if save_url != "" and save_url is not None:
                     tarfile = f"/tmp/save"
                     os.makedirs(tarfile,exist_ok=True)
