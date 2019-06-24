@@ -9,7 +9,4 @@ gcloud compute instances create $NAME \
 --boot-disk-type=pd-standard  \
 --maintenance-policy=TERMINATE  \
 --scopes=bigquery,storage-ro,storage-rw  \
---metadata=startup-script-url=https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/gcloud-setup.sh $*
-#--accelerator=count=1,type=nvidia-tesla-v100  \
-#--accelerator=count=1,type=nvidia-tesla-k80  \
-#--zone=europe-west4-b  \
+--metadata=startup-script-url=https://raw.githubusercontent.com/exasol/data-science-examples/master/examples/tensorflow-with-gpu-preview/gcloud-setup.sh $*
