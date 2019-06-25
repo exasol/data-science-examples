@@ -1,0 +1,15 @@
+Keras
+Keras-Applications
+Keras-Preprocessing
+numpy
+pandas
+pyexasol
+python-dateutil
+pytz
+PyYAML
+scipy
+stopwatch.py
+tensorboard
+tensorflow
+tensorflow-hub
+requests
