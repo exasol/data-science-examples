@@ -87,7 +87,7 @@ set -x -e -o pipefail -u
   SIZE="$((100*1073741824))"
   sudo dd if=/dev/zero of=/exa/data/storage/dev.1 bs=1 count=1 seek=$SIZE
   sudo chmod +rw /exa
-  sudo nvidia-docker run --name exasoldb -p 8888:8888 -p 6583:6583 -v /exa:/exa --detach --privileged --stop-timeout 120 --restart always exasol/docker-db
+  sudo nvidia-docker run --name exasoldb -p 8888:8888 -p 6583:6583 -v /exa:/exa --detach --privileged --stop-timeout 120 --restart always exasol/docker-db:6.1.3-d1
 
   ##### Install Python #####
   sudo echo "Install Python" >> /setup.log
