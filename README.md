@@ -1,11 +1,12 @@
 # Data Science with Exasol
-This repository contains a collection of examples and tutorials for Data Science and Machine Learning with Exasol. In those examples and tutorials you learn how to prepare the data, build, train and deploy your model with and within Exasol.
+This repository contains a collection of examples and tutorials for Data Science and Machine Learning with Exasol. In those examples and tutorials you learn how to explore and prepare your data and build, train and deploy your model with and within Exasol.
 
 **Currently, this repository is under development and we will add more and more examples and tutorials in the future.**
 
 ## What's inside:
 
-* [Tutorials](tutorials/README.md): Tutorials show a complete workflow on a realistic use case and data. 
+* [Tutorials](tutorials): Tutorials show a complete workflow on a realistic use case and data. 
+* [Examples](examples): Examples only show how to integrate a specific technology, but not a whole data science workflow with it.
 
 ## Prerequisites:
 
