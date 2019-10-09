@@ -5,7 +5,7 @@ This section contains tutorials for doing Spatial Analysis within the Exasol dat
 
 ### Languages:
 
-* [Visualiszing Spatial Queries](visualizing_spatial_queries)
+* [Visualizing Spatial Queries](visualizing_spatial_queries)
   
 ### Prerequisites
 
