@@ -1,8 +1,10 @@
 # Exasol Spatial Demo with Jupyter Notebook
+
 [
 Geospatial data](https://docs.exasol.com/sql_references/geospatialdata.htm) can be stored and analyzed in the Exasol database using the GEOMETRY datatype. In this solution, we will show you some examples of how to work with geospatial data inside a Jupyter Notebook with the help of SQL inline magic and visualize geospatial data on map using Python libraries. 
 
 # Table of contents
+
 <!-- toc -->
 
 - [Prerequisites](#prerequisites)
@@ -14,11 +16,19 @@ Geospatial data](https://docs.exasol.com/sql_references/geospatialdata.htm) can 
 
 ### Prerequisites  
 
-To run this demo a working [Jupyter notebook](#https://jupyter.org/install) is required with python version 2.7 or greater.  After Python and Jupyter notebook installation, we need [ipython-sql library](#ipython-sql-library) to run SQL from Jupyter notebook, [SQL Alchemy](https://www.sqlalchemy.org/) dialect to [connect to EXASOL](#connection-to-exasol) and some additional [python libraries](#additional-python-libraries) for data visualization. 
+To run this demo a working [Jupyter notebook](https://jupyter.org/install) is required with python version 2.7 or greater.  After Python and Jupyter notebook installation, we need; [ipython-sql library](#ipython-sql-library) to run SQL from Jupyter notebook, [SQL Alchemy](https://www.sqlalchemy.org/) dialect to [connect to EXASOL](#connection-to-exasol) and some additional [python libraries](#additional-python-libraries) for data visualization. GeoJSON files containing spatial data for New York City needs to be downloaded in the [geojsonfiles](geojsonfiles) folder. 
+
+#### GeoJSON files
+
+Download the following GeoJSON files in [geojsonfiles](geojsonfiles) folder:
+
+1. New York City Streets data:- https://storage.googleapis.com/exasol_data_science_examples_data/visualizing_spatial_queries/geojsonfiles/nyc_street_data.geojson
+2. New York City Borough boundaries data:- https://storage.googleapis.com/exasol_data_science_examples_data/visualizing_spatial_queries/geojsonfiles/nycboroughboundaries.geojson
+3. New York City Neighborhood boundaries data:- https://storage.googleapis.com/exasol_data_science_examples_data/visualizing_spatial_queries/geojsonfiles/nycneighborhoods.geojson
 
 #### IPython-sql library
 
-[ipython-sql libraray](https://github.com/catherinedevlin/ipython-sql) enables the use of Jupyter magic functions. With Jupyter magic functions, Jupyter notebooks can be used for data analysis with SQL on a database. Magic functions are pre-defined functions in Jupyter kernel that executes supplied commands. They are prefaced with `%` character. Usage and installation instructions can be found [here](https://github.com/catherinedevlin/ipython-sql).  After installation run the following command:
+[IPython-sql libraray](https://github.com/catherinedevlin/ipython-sql) enables the use of Jupyter magic functions. With Jupyter magic functions, Jupyter notebooks can be used for data analysis with SQL on a database. Magic functions are pre-defined functions in Jupyter kernel that executes supplied commands. They are prefaced with `%` character. Usage and installation instructions can be found [here](https://github.com/catherinedevlin/ipython-sql).  After installation run the following command:
 
 ```mysql
 %load_ext sql
@@ -38,17 +48,17 @@ DSN should point to your ODBC installation. For EXASOL6.2 ODBC download and inst
 
 #### Additional Python libraries
 
-Additional python libraries are used to process and visualize geospatial data. We make use of the following python libraries for this demo. Make sure to install them before running [Visualizing_geo_data.ipynb](Visualizing_geo_data.ipynb):
+Additional python libraries are used to process and visualize geospatial data. We make use of the following python libraries for this demo:
 
 1. [Folium](https://pypi.org/project/folium/)
 2. [Pandas](https://pandas.pydata.org/pandas-docs/stable/install.html)
-3. [Geojson](https://pypi.org/project/geojson/)
+3. [GeoJSON](https://pypi.org/project/geojson/)
 4. [JSON](https://docs.python.org/3/library/json.html)
-5. [Requests](https://2.python-requests.org/en/master/user/install/)
+5. [Requests](https://pypi.org/project/requests/)
 
 #### Jupter Notebook extensions
 
-Extensions allow to enhance features of Jupyter Notebook. They are easy to install and configure using the `Nbextensions configuration` page. We have used two extensions in our demo. Remember that the purpose of these extensions is to help visualize the results and are not required to run the [Visualizing_geo_data.ipynb](Visualizing_geo_data.ipynb) demo. 
+Extensions allow to enhance features of Jupyter Notebook. They are easy to install and configure using the `Nbextensions configuration` page. We have used two extensions in our demo. Remember that the purpose of these extensions is to help visualize the results and are not required to run the [visualizing_spatial_queries.ipynb](visualizing_spatial_queries.ipynb) demo. 
 
 Installation and configuration details for these extensions can be found [here](https://github.com/ipython-contrib/jupyter_contrib_nbextensions)
 
@@ -84,21 +94,19 @@ New York City Taxi pickups data is stored in `TRIPS`  table in `NYC_TAXI schema`
 
 ### Use Cases 
 
-Let's go briefly through the use cases implemented in [Visualizing_geo_data.ipynb](Visualizing_geo_data.ipynb)
+Let's go briefly through the use cases implemented in [visualizing_spatial_queries.ipynb](visualizing_spatial_queries.ipynb)
 
 #### Uber pickups grouped by New York City Boroughs
 
-In the first use case, we use New York City data in `NYC_UBER` schema to show Uber pickups per borough in New York City. Borough boundary data is publicly available at [NYC_BOROUGHS]( http://data.beta.nyc/dataset/nyc-borough-boundaries). We use Uber pickups data and NYC borough data to query the total number of Uber pickups per borough using inline SQL magic 
+In the first use case, we use New York City data in `NYC_UBER` schema to show Uber pickups per borough in New York City. We use Uber pickups data and NYC borough data to query the total number of Uber pickups per borough using inline SQL magic. To visualize New York City borough boundaries we use [New York City Borough boundaries](#GeoJSON-files) dataset. 
 
 #### Uber pickups grouped by New York City Neighborhoods
 
-In the second use case, we use New York City data in `NYC_UBER` schema  to show Uber pickups per neighborhood in New York City. Neighborhood boundary data is publicly available at [NYC_NEIGHBORHOODS](http://data.beta.nyc//dataset/0ff93d2d-90ba-457c-9f7e-39e47bf2ac5f/resource/35dd04fb-81b3-479b-a074-a27a37888ce7/download/d085e2f8d0b54d4590b1e7d1f35594c1pediacitiesnycneighborhoods.geojson). We use Uber pickups data and NYC neighborhood data to query the total number of Uber pickups per neighborhood using inline SQL magic  
+In the second use case, we use New York City data in `NYC_UBER` schema  to show Uber pickups per neighborhood in New York City. We use Uber pickups data and NYC neighborhood data to query the total number of Uber pickups per neighborhood using inline SQL magic. To visualize New York City neighborhood boundaries we use [New York City Neighborhood boundaries](#GeoJSON-files) dataset. 
 
 #### New York City Streets with highest Uber pickups
 
-In the third use case, we use NYC street data and NYC Uber pickup data to visualize top streets according to number of pickups. This data is stored in our demo database in `NYC_UBER` schema. The NYC street multiline data which we need for visualization is publicly available at [NYC_STREET_DATA](https://data.cityofnewyork.us/City-Government/NYC-Street-Centerline-CSCL-/exjm-f27b)
-
-Example in this query can be parameterized to view different results on the map by providing a value for variable `NumberOfStreets` 
+In the third use case, we use NYC street data and NYC Uber pickup data to visualize top streets according to number of pickups. This data is stored in our demo database in `NYC_UBER` schema.  To visualize New York City neighborhood boundaries we use [New York City Streets](#GeoJSON-files) dataset. Example in this query can be parameterized to view different results on the map by providing a value for variable `NumberOfStreets` 
 
 #### Comparison of Yellow Taxi and Uber pickups within a certain radius of a location in New York City 
 
@@ -106,8 +114,11 @@ In the fourth use case, we make a comparison between the number of Uber and Yell
 
 ### External Resources
 
-GeoJSON files used for this demo (available in geojsonfiles folder) were obtained from the following sources:
+GeoJSON files used for this demo were obtained from the following sources:
 
 - NYC borough boundary polygons:  http://data.beta.nyc/dataset/nyc-borough-boundaries
 - NYC neighborhood boundary polygons:  http://data.beta.nyc/dataset/nyc-neighborhood-boundaries
 - NYC streets multi-line data: https://data.cityofnewyork.us/City-Government/NYC-Street-Centerline-CSCL-/exjm-f27b
+
+Currently the following external resources are unavailable therefore you need to download required [GeoJSON files](#GeoJSON-files).
+
