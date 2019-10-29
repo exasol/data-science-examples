@@ -11,7 +11,7 @@ class LinearRegressionPredictionByOneColumn:
     def start_regression(self, schema_name: str, table_name: str, x_column_name: str, y_column_name: str):
         self.connection.open_schema(schema_name)
         pandas_result_set = self.connection.export_to_pandas(
-            "SELECT {x_column_name}, {y_column_name} FROM {table_name} LIMIT 1000000".format(table_name=table_name,
+            "SELECT {x_column_name}, {y_column_name} FROM {table_name}".format(table_name=table_name,
                                                                                              x_column_name=x_column_name,
                                                                                              y_column_name=y_column_name))
         x = pandas_result_set[x_column_name].values.reshape(-1, 1)
