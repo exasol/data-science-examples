@@ -9,8 +9,15 @@ from tensorflow.python.keras.engine.training import Model
 from tensorflow.python.keras.layers import Dense, Concatenate
 
 from column_encoder import ColumnEncoder
+from output_postprocessor import OutputPostprocessor
 from dataset_utils import DatasetUtils
 from utils import Utils
+import json
+
+# todo add column encoder makes select
+
+# todo test jupiter notebook in exasol examples
+
 
 
 class TensorflowUDF():
@@ -22,8 +29,8 @@ class TensorflowUDF():
         net = Dense(100, activation='relu')(net)
         return net
 
-    def read_config(self,exa):
-        config_file_url = exa.get_connection(self.CONNECTION_NAME).address
+    def read_config(self, exa):
+        config_file_url = exa.meta.get_connection(self.CONNECTION_NAME).address
         url_data = urllib.parse.urlparse(config_file_url)
         config_file = urllib.parse.unquote(url_data.path)
         with open(config_file) as file:
@@ -32,7 +39,23 @@ class TensorflowUDF():
             print(file.read())
         return config
 
-    def run(self, ctx, exa, train:bool):
+    def default_output_columns(self, exa):# todo what works test in test udf
+        output_args = list()
+        config = self.read_config(exa)
+        processor = OutputPostprocessor()
+        output_descriptions, output_columns = processor.make_output_descriptions(config, exa.meta.input_columns,)
+        # todo save description somewhere?
+        #   in bucketfs? what if multiple udfs working at once?
+        filename = "output_descriptions" # todo better filename, put path in config?
+        with open(filename, 'w') as outfile:
+            json.dump(output_descriptions, outfile, indent=4)
+
+        new_output_description = processor.select_outputs_for_default_output_columns(output_descriptions)
+        for column in new_output_description:
+            output_args.append(column[3] + " " + column[4])
+        return str(", ".join(output_args))
+
+    def run(self, ctx, exa, train: bool):
         session_config = tf.ConfigProto(
             allow_soft_placement=True,
             log_device_placement=False)
@@ -55,13 +78,14 @@ class TensorflowUDF():
             ctx, epochs, batch_size, use_cache, exa.meta.input_columns)
 
         with tf.device(config["device"]):
+            batchsize = config["batch_size"]
             input_columns, keras_inputs, preprocessed_keras_inputs = \
                 ColumnEncoder().generate_inputs(
                     exa.meta.input_columns, config["columns"])
             table_network = self.create_table_network(preprocessed_keras_inputs)
             output_columns, keras_outputs, losses, loss_weights, output_metrics = \
                 ColumnEncoder().generate_outputs(
-                    exa.meta.input_columns, table_network, config["columns"])
+                    exa.meta.input_columns, table_network, config["columns"], batchsize)
             session.run(tf.tables_initializer())
 
             dataset = DatasetUtils().create_dataset(dataset,
@@ -88,27 +112,38 @@ class TensorflowUDF():
             print(output_metrics, flush=True)
             model.compile(optimizer='rmsprop', loss=losses, loss_weights=loss_weights, metrics=output_metrics,
                           **profile_model_options)
-            print(model.summary(),flush=True)
+            print(model.summary(), flush=True)
 
             if train:
-                print("Starting training",flush=True)
+                print("Starting training", flush=True)
                 history = model.fit(dataset_iterator, steps_per_epoch=steps_per_epoch,
                                     epochs=initial_epoch + epochs, verbose=2, callbacks=callbacks,
                                     initial_epoch=initial_epoch )
                 ctx.emit(str(history.history))
-                print("save_url", save_url,flush=True)
+                print("save_url", save_url, flush=True)
                 if save_url != "" and save_url is not None:
                     tarfile = f"/tmp/save"
-                    os.makedirs(tarfile,exist_ok=True)
+                    os.makedirs(tarfile, exist_ok=True)
                     self.tar_save(save_path, tarfile)
                     self.upload_save(save_url, tarfile)
 
             else:
-                print("Starting prediction",flush=True)
+                print("Starting prediction", flush=True)
+                processor = OutputPostprocessor()
+                filename = "output_descriptions"  # todo better filename
+                with open(filename) as infile:
+                    output_descriptions = json.load(infile)
+                os.remove(filename)
+
                 for i in range(steps_per_epoch):
-                    print(f"Predicting Batch {i}/steps_per_epoch",flush=True)
+                    print(f"Predicting Batch {i}/steps_per_epoch", flush=True)
                     output = model.predict(dataset_iterator, steps=1)
-                    ctx.emit(output)
+                    output_df = processor.select_outputs(output, output_descriptions)
+
+                    #output_df.to_csv('data_out.cvs')
+                    print(output_df, "\n")
+                    print("___________________________________")
+                    ctx.emit(output_df)
 
     def upload_save(self, save_url, tarfile):
         print("Upload save", flush=True)
@@ -118,7 +153,7 @@ class TensorflowUDF():
             requests.put(f"{save_url}/checkpoints.tar", data=f)
 
     def tar_save(self, save_path, tarfile):
-        print("Tar save",flush=True)
+        print("Tar save", flush=True)
         try:
             subprocess.check_output(f"tar -czf {tarfile}/metrics.tar {save_path}/metrics", shell=True)
             subprocess.check_output(f"tar -czf {tarfile}/checkpoints.tar {save_path}/checkpoints", shell=True)

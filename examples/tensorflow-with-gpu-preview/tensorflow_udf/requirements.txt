@@ -10,6 +10,6 @@ PyYAML
 scipy
 stopwatch.py
 tensorboard
-tensorflow
+tensorflow==1.13.2
 tensorflow-hub
 requests
