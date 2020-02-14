@@ -60,10 +60,10 @@ class LinearRegressionPrediction:
     def __get_x_columns_data_frame(self, all_columns_train_data_frame: DataFrame, x_columns_categorical_dict: dict,
                                    x_columns_categorical_list: list, x_columns_numerical_list: list,
                                    split: str) -> DataFrame:
-        categorical_columns_date_frame = all_columns_train_data_frame.filter(x_columns_categorical_list, axis=1)
+        categorical_columns_date_frame = all_columns_train_data_frame[x_columns_categorical_list]
         encoded_categorical_columns_data_frame = self.__encode_categorical_columns(categorical_columns_date_frame,
                                                                                    x_columns_categorical_dict)
-        numerical_columns_data_frame = all_columns_train_data_frame.filter(x_columns_numerical_list, axis=1)
+        numerical_columns_data_frame = all_columns_train_data_frame[x_columns_numerical_list]
         x_columns_data_frame = pandas.concat([encoded_categorical_columns_data_frame, numerical_columns_data_frame],
                                              axis=1)
         print(
@@ -78,9 +78,7 @@ class LinearRegressionPrediction:
 
     def __encode_categorical_columns(self, pandas_result_set_for_training: DataFrame,
                                      x_columns_categorical: dict) -> DataFrame:
-        categories = []
-        for value in x_columns_categorical.values():
-            categories.append(numpy.arange(value + 1))
+        categories = [numpy.arange(value + 1) for value in x_columns_categorical.values()]
         one_hot_encoder = OneHotEncoder(categories=categories, sparse=False)
         one_hot_encoder.fit(pandas_result_set_for_training.values[0:1, :])
         transformed_column = DataFrame(one_hot_encoder.transform(pandas_result_set_for_training.values))
