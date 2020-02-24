@@ -1,0 +1,43 @@
+--/
+CREATE OR REPLACE PYTHON3 SET SCRIPT TEST.run_linear_regression(connection_name VARCHAR(1000), schema_name VARCHAR(1000), table_name VARCHAR(1000),x_columns_numerical VARCHAR(2000), x_columns_categorical VARCHAR(2000), column_to_predict VARCHAR(1000), batch_size DECIMAL(18,0))
+EMITS (actual VARCHAR(20000), predicted VARCHAR(20000)) AS
+import requests
+import sys
+import pyexasol
+
+def download_python_file():
+        python_code_github_link = "https://raw.githubusercontent.com/exasol/data-science-examples/master/tutorials/python/scikit-learn/regression/LinearRegressionPrediction.py"
+        file_name = 'LinearRegressionPrediction.py'
+        r = requests.get(python_code_github_link, allow_redirects=True)
+        with open('/tmp/' + file_name, 'wb') as f:
+                f.write(r.content)
+
+def run(ctx):
+        download_python_file()
+        sys.path.append('/tmp')
+
+        from LinearRegressionPrediction import LinearRegressionPrediction
+        numerical_columns_string = ctx.x_columns_numerical
+        numerical_columns_list = [column.strip() for column in numerical_columns_string.split(",")]
+
+        caterogical_columns_string = ctx.x_columns_categorical
+        caterogical_columns_list =  [column.strip() for column in caterogical_columns_string.split(",")]
+
+        connection_string = exa.get_connection(ctx.connection_name)
+        connection = pyexasol.connect(dsn=connection_string.address, user=connection_string.user, password=connection_string.password, compression=True)
+        regression = LinearRegressionPrediction(connection)
+        prediction = regression.start_regression(ctx.schema_name, ctx.table_name, numerical_columns_list, caterogical_columns_list, ctx.column_to_predict, ctx.batch_size)
+
+        for ind, rw in prediction.iterrows():
+                ctx.emit(str(rw['Actual']), str(rw['Predicted']))
+
+        connection.close()
+/
+;
+
+-- How to run the script:
+-- CREATE SCHEMA IF NOT EXISTS <schema name>;
+-- CREATE OR REPLACE CONNECTION EXASOL_CONNECTION TO 'http://<host>:<port>' USER '<username>' IDENTIFIED BY '<password>';
+-- CREATE OR REPLACE PYTHON3 SET SCRIPT... (see above);
+
+-- SELECT <schema name>.run_linear_regression('EXASOL_CONNECTION', '<schema name>', '<name of the table with prepared data>', '<numerical_column_1, numerical_column_2>', '<categorical_column_1, categorical_column_2>', 'prediction_column', <batch size>);
