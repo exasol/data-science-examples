@@ -78,32 +78,25 @@ set -x -e -o pipefail -u
   # Test nvidia-smi with the latest official CUDA image
   sudo docker run --runtime=nvidia --rm nvidia/cuda:9.0-base nvidia-smi
 
-  ##### Install Exasol #####
-  sudo echo "Install Exasol" >> /setup.log
-
-  wget https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/EXAConf
-  sudo mkdir -p /exa/{etc,data/storage}
-  sudo cp EXAConf /exa/etc/EXAConf
-  SIZE="$((100*1073741824))"
-  sudo dd if=/dev/zero of=/exa/data/storage/dev.1 bs=1 count=1 seek=$SIZE
-  sudo chmod +rw /exa
-  sudo nvidia-docker run --name exasoldb -p 8888:8888 -p 6583:6583 -v /exa:/exa --detach --privileged --stop-timeout 120 --restart always exasol/docker-db:6.1.3-d1
-
   ##### Install Python #####
   sudo echo "Install Python" >> /setup.log
 
   sudo DEBIAN_FRONTEND=noninteractive \
-        apt-get install -yq python3-pip
+        apt-get install -yq --no-install-recommendspython3-pip
   sudo pip3 install pyexasol tensorboard tensorflow
+  
+  ##### Install Exasol #####
+  sudo echo "Install Exasol" >> /setup.log
+
+  git clone https://github.com/exasol/integration-test-docker-environment.git --branch enhancement/set_default_name_server_in_exaconf
+  pushd integration-test-docker-environment
+  /start-test-env spawn-test-environment --environment-name test --docker-runtime nvidia --database-port-forward 8888 --bucketfs-port-forward 6583 --db-mem-size 8GB --db-disk-size 8GB
+  popd
+
   #### Download scripts ####
   sudo echo "Download scripts" >> /setup.log
 
   wget https://raw.githubusercontent.com/tkilias/data-science-examples/tensorflow-gpu-preview/examples/tensorflow-with-gpu-preview/system-status.sh
-
-  #### Finish Setup #####
-  sudo echo "Wait for Exasol" >> /setup.log
-
-  sleep 180 # Wait for database to startup
   sudo bash -x /system-status.sh &> status.log
   sudo cp status.log /
 
