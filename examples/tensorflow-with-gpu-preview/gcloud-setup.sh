@@ -90,7 +90,7 @@ set -x -e -o pipefail -u
 
   git clone https://github.com/exasol/integration-test-docker-environment.git --branch enhancement/set_default_name_server_in_exaconf
   pushd integration-test-docker-environment
-  /start-test-env spawn-test-environment --environment-name test --docker-runtime nvidia --database-port-forward 8888 --bucketfs-port-forward 6583 --db-mem-size 8GB --db-disk-size 8GB
+  ./start-test-env spawn-test-environment --environment-name test --docker-runtime nvidia --database-port-forward 8888 --bucketfs-port-forward 6583 --db-mem-size 8GB --db-disk-size 8GB
   popd
 
   #### Download scripts ####
