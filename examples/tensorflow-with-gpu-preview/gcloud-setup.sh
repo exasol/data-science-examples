@@ -83,7 +83,7 @@ set -x -e -o pipefail -u
 
   sudo DEBIAN_FRONTEND=noninteractive \
         apt-get install -yq --no-install-recommendspython3-pip
-  sudo pip3 install pyexasol tensorboard tensorflow
+  sudo pip3 install pyexasol
   
   ##### Install Exasol #####
   sudo echo "Install Exasol" >> /setup.log
