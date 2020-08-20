@@ -1,27 +1,47 @@
 columns:
   input:
     f_text_0:
-      type: "string"
       module_url: "https://tfhub.dev/google/universal-sentence-encoder-large/3"
-      # dan_module_url = "https://tfhub.dev/google/universal-sentence-encoder/2"
-    f_text_1:
-      type: "string"
-      module_url: "https://tfhub.dev/google/universal-sentence-encoder-large/3"
-    f_int_0:
       type: "categorical"
-      hash_bucket_size: 100
-      embedding_dimensions: 100
+      method: "vocabulary"
+      parameters:
+        vocab_path: "http://r:rp@192.168.122.59:2580/bn/f_text_0_CATEGORIES" #"save/f_int_0"
+        embedding_dimensions: 100
+      # dan_module_url = "https://tfhub.dev/google/universal-sentence-encoder/2"
+    #f_text_1:
+    #  type: "string"
+    #  module_url: "https://tfhub.dev/google/universal-sentence-encoder-large/3"
+    #f_int_0:
+    #  type: "categorical"
+    #  method: "vocabulary"
+    #  parameters:
+    #    vocab_path: "http://r:rp@192.168.122.59:2580/bn/f_int_0_CATEGORIES" # "save/f_int_0"
+    #    embedding_dimensions: 100
+    f_int_1:
+      type: "categorical"
+      method: "hash"
+      parameters:
+        hash_bucket_size: 100
+        embedding_dimensions: 100
   output:
     f_float_0:
       type: "float"
       min_value: 0
       max_value: 1
-    f_int_1:
+    f_int_0:
       type: "categorical"
-      hash_bucket_size: 100
-      embedding_dimensions: 100
+      method: "vocabulary"
+      parameters:
+        vocab_path: "http://r:rp@192.168.122.59:2580/bn/f_int_0_CATEGORIES" #"save/f_int_0"
+        embedding_dimensions: 100
+    f_text_0:
+      type: "categorical"
+      method: "vocabulary"
+      parameters:
+        vocab_path: "http://r:rp@192.168.122.59:2580/bn/f_text_0_CATEGORIES" #"save/f_int_0"
+        embedding_dimensions: 100
 use_cache: false
-batch_size: 100
+batch_size: 3
 epochs: 5
 profile: true
 device: "/device:GPU:0" # "/cpu:0"
