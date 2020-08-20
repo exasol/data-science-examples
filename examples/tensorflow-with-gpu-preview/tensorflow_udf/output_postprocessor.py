@@ -30,7 +30,10 @@ class OutputPostprocessor():
     def flatten(self, input):
         out = []
         for j in input:
-            out.append(*j)
+            if isinstance(input, (list, dict, tuple)):
+                out.extend(j)
+            else:
+                out.append(j)
         out_array = array(out, dtype="float32")
         return out_array
 
