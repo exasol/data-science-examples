@@ -30,7 +30,7 @@ class TensorflowUDF():
         return net
 
     def read_config(self, exa):
-        config_file_url = exa.meta.get_connection(self.CONNECTION_NAME).address
+        config_file_url = exa.get_connection(self.CONNECTION_NAME).address
         url_data = urllib.parse.urlparse(config_file_url)
         config_file = urllib.parse.unquote(url_data.path)
         with open(config_file) as file:
