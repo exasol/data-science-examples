@@ -46,7 +46,7 @@ class TensorflowUDF():
         output_descriptions, output_columns = processor.make_output_descriptions(config, exa.meta.input_columns,)
         # todo save description somewhere?
         #   in bucketfs? what if multiple udfs working at once?
-        filename = "output_descriptions" # todo better filename, put path in config?
+        filename = "/tmp/output_descriptions" # todo better filename, put path in config?
         with open(filename, 'w') as outfile:
             json.dump(output_descriptions, outfile, indent=4)
 
@@ -130,10 +130,8 @@ class TensorflowUDF():
             else:
                 print("Starting prediction", flush=True)
                 processor = OutputPostprocessor()
-                filename = "output_descriptions"  # todo better filename
-                with open(filename) as infile:
-                    output_descriptions = json.load(infile)
-                os.remove(filename)
+                output_descriptions, output_columns = processor.make_output_descriptions(config, exa.meta.input_columns,)
+                new_output_description = processor.select_outputs_for_default_output_columns(output_descriptions)
 
                 for i in range(steps_per_epoch):
                     print(f"Predicting Batch {i}/steps_per_epoch", flush=True)
