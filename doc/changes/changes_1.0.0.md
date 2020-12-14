@@ -4,3 +4,4 @@
 
 * # 21: Added an example for connecting from AWS Sagemaker to an Exasol database
 * # 23: Added an example for training a Sagemaker model with data from Exasol
+* # 25: Added an example for using a Sagemaker model from within Exasol 

@@ -26,6 +26,7 @@ This section contains tutorials with the Python Programming Language. We are goi
 
   * [How to connect from a SageMaker Notebook to Exasol](sagemaker/ConnectSagemakerToExasol.ipynb)
   * [How to train a Sagemaker model with data from Exasol](sagemaker/TrainSagemakerModelWithExasolData.ipynb)
+  * [How to use a Sagemaker model from inside of Exasol](sagemaker/UseSagemakerModelFromExasol.ipynb)
 
 ### Prerequisites:
 
