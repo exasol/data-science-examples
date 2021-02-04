@@ -1,2 +1,3 @@
 pexpect==4.8.0
 pyexasol==0.16.1
+requests==2.25.1
