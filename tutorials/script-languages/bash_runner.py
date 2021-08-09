@@ -1,9 +1,8 @@
 from pexpect import replwrap, EOF
 import pexpect
-
+# Inspired by https://github.com/takluyver/bash_kernel
 class IREPLWrapper(replwrap.REPLWrapper):
     """A subclass of REPLWrapper that gives incremental output
-    specifically for bash_kernel.
     The parameters are the same as for REPLWrapper, except for one
     extra parameter:
     :param line_output_callback: a callback method to receive each batch
