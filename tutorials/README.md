@@ -11,5 +11,6 @@ For general prerequisites, please refer to [Prerequisites](../README.md).
   * [Python](machine-learning/python):
     * [Scikit-learn](machine-learning/python/scikit-learn)
     * [Sagemaker](machine-learning/python/sagemaker) Using AWS sagemaker for machine learning with Exasol
+* [Script-Language Container](script-languages)
 * [Spatial Analysis](spatial-analysis)
   * [Visualizing Spatial Queries](spatial-analysis/visualizing_spatial_queries)
