@@ -4,11 +4,11 @@
 This tutorial walks you through the setup of the Exasol SageMaker-Extension 
 project and presents an  use-case of how this extension can be used in Exasol.
 
-Exasol Sagemaker Extension enables you to develop an end-to-end machine 
-learning project on data stored in Exasol using AWS SageMaker Autopilot service.
+The Exasol Sagemaker Extension enables you to develop an end-to-end machine 
+learning project on data stored in Exasol using the AWS SageMaker Autopilot service.
 
-The use-case handles a publicly available real-world data provided by a heavy 
-truck manufacturer (see Use Case[#use-case]). With the 
+The use-case handles a publicly available real-world dataset provided by a heavy 
+truck manufacturer (see (Use Case)[#use-case]). With the 
 provided extension, a machine learning model is developed which allows 
 predicting  whether the truck failures are related to a particular component.
 
@@ -16,12 +16,12 @@ predicting  whether the truck failures are related to a particular component.
 AWS SageMaker is an AWS public cloud service in which users can build and deploy 
 machine learning models. SageMaker provides a number of levels of abstraction to 
 users while developing machine learning models. At one of the its highest level 
-of abstraction, SageMaker enables users to use Automated machine learning 
-(AutoML) service, called Autopilot in AWS, that automatize the process of 
+of abstraction, SageMaker enables users to use an Automated machine learning 
+(AutoML) service, called Autopilot in AWS, that automatizes the process of 
 applying machine learning  to real world problems.
 
-Autopilot covers a  complete pipeline of developing end-to end machine learning 
-project, from raw data to deployable model. It is able to automatically build, 
+Autopilot covers a  complete pipeline of developing an end-to end machine learning 
+project, from raw data to a deployable model. It is able to automatically build, 
 train and tune a number of machine learning models by inspecting your data set. 
 In this way, the following tasks, which are repeatedly applied by ML-experts 
 in machine learning projects, are automated:
@@ -31,13 +31,13 @@ in machine learning projects, are automated:
 - Tune and optimize hyper-parameters of model.
 - Post-process machine learning models.
 
-Exasol Sagemaker Extension takes these advantages of AWS Autopilot and enables 
+The Exasol Sagemaker Extension takes these advantages of AWS Autopilot and enables 
 users to easily create an effective and efficient machine learning models 
 without expert knowledge.
 
 ### 1.2 Exasol SageMaker Extension
 
-Exasol Sagemaker Extension provides a Python library together with Exasol 
+The Exasol Sagemaker Extension provides a Python library together with Exasol 
 Scripts and UDFs that train Machine Learning Models on data stored in Exasol 
 using AWS SageMaker Autopilot service.
 
@@ -56,9 +56,9 @@ UDF script for making real-time predictions.
 
 ### 2.1 Installation
 
-In order to use SageMaker Extension, it is necessary to install the  built 
-archive provided, upload the given SageMaker-Extension Container into 
-BucketFS and then activate the uploaded container in Exasol. These pre-packages 
+In order to use the Exasol SageMaker Extension, it is necessary to install the python package of the Extension 
+, upload the given SageMaker-Extension Container into 
+BucketFS and then activate the uploaded container in Exasol. These pre-packaged
 releases are available in the [Releases](https://github.com/exasol/sagemaker-extension/releases) 
 of the Github repository. 
 
@@ -80,29 +80,29 @@ CONTAINER_NAME="exasol_sagemaker_extension_container-release"
 CONTAINER_FILE="exasol_sagemaker_extension_container-release.tar.gz"
 ```
 
-- The packaged sagemaker-extension project ****provides a command line tool to 
+- The sagemaker-extension python package ****provides a command line tool to 
 deploy the Lua and UDF scripts to the database.**** It is installed as follows 
 (Please check [the latest release](https://github.com/exasol/sagemaker-extension/releases/latest)):
     ```buildoutcfg
-    pip install exasol_sagemaker_extension.whl
+    pip install https://github.com/exasol/sagemaker-extension/releases/download/<version>/exasol_sagemaker_extension-<version>-py3-none-any.whl
     ```
 
-- The required libraries and dependencies of the SageMaker Extension project are 
-distributed into Exasol by uploading the pre-built SageMaker-Extension Language 
-Container to the BucketFS. You can upload  with any http(s) client that can send 
+- The required libraries and dependencies of the Exasol SageMaker Extension are 
+distributed into Exasol by uploading the pre-built Exasol SageMaker-Extension Language 
+Container to the BucketFS. You can upload it with any http(s) client that can send 
 files via HTTP-Put requests. For more details please check 
 [Access Files in BucketFS](https://docs.exasol.com/database_concepts/bucketfs/file_access.htm). 
-The following example uploads the pre-builtSageMaker-Extension Container to BucketFS through curl command, a http(s) client:
+The following example uploads the pre-built SageMaker-Extension Container to BucketFS with the curl command, a http(s) client:
     ```buildoutcfg
     curl -vX PUT -T \ 
         "<CONTAINER_FILE>" 
         "http://w:<BUCKETFS_WRITE_PASS>@$bucketfs_host:<BUCKETFS_PASS>/<BUCKETFS_NAME>/<PATH_IN_BUCKET><CONTAINER_FILE>"
     ```
 
-- You need to activate the uploaded container  for the whole system through 
-adjusting session parameter `SCRIPT_LANGUAGES`.  Please, keep in mind that 
+- You need to activate the uploaded container  for your session or the whole system through 
+adjusting parameter `SCRIPT_LANGUAGES`.  Please, keep in mind that 
 the name of the language alias is assumed to be `PYTHON_SME` in the 
-SageMaker-Extension. For more details please check 
+SageMaker-Extension. For more details, please check 
 [Adding New Packages to Existing Script Languages](https://docs.exasol.com/database_concepts/udf_scripts/adding_new_packages_script_languages.htm).
 The following example query activates the container session-wide:
     ```buildoutcfg
@@ -115,7 +115,7 @@ The following example query activates the container session-wide:
 
 ### 2.2 Deployment
 
-The installed SageMaker-extension package provides a command line tool, enabling 
+The installed SageMaker-extension python package provides a command line tool, enabling 
 you to deploy all necessary Lua and UDF scripts into the specified 
 `DATABASE_SCHEMA` of Exasol Database. The command line is run as follows: 
 
@@ -145,18 +145,18 @@ Lua and UDF scripts listed below in the specified schema:
 
 ### 2.3 Create Connection to AWS
 
-The SageMaker needs to make connection with your AWS SageMaker and AWS S3 bucket. 
-For that it needs AWS credentials that has AWS Sagemaker Execution permissions. 
+The Exasol SageMaker Extension needs to connect to AWS SageMaker and your AWS S3 bucket. 
+For that, it needs AWS credentials that has AWS Sagemaker Execution permissions. 
 The required credentials are AWS Access Key (Please check how to 
 [create an access key pair](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)).
 
 
-In order for SageMaker-Extension to use access-key pair, you need to create 
-Exasol `CONNECTION` object which securely stores your keys. For more information 
-please check the [Create Connection in Exasol](https://docs.exasol.com/sql/create_connection.htm?Highlight=connection):  
+In order for the SageMaker-Extension to use the Access Key, you need to create 
+an Exasol `CONNECTION` object which securely stores your keys. For more information, 
+please check [Create Connection in Exasol](https://docs.exasol.com/sql/create_connection.htm?Highlight=connection):  
 
 
-Before creating the connection object, let's define the variables for the aws connection (Please note that you need to use your own credentials for below variables.)
+Before creating the connection object, let's define the variables for the AWS connection (Please note, that you need to use your own credentials for below variables.)
 ```buildoutcfg
 AWS_BUCKET="ida_dataset_bucket"
 AWS_REGION="eu-central-1"
