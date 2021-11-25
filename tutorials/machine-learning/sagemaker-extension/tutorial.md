@@ -196,10 +196,10 @@ Intelligent Data Analysis (IDA)](https://ida2016.blogs.dsv.su.se/) in 2016.
 The dataset consists of data collected from heavy Scania trucks in everyday usage. The dataset includes two different class accroding to Air Pressure system (APS): (1) The positive class 
 consists of component failures for a specific component of the APS system. (2) The negative class consists of trucks with failures for components not related to the APS. 
 
-In this use case,  it is proposed to develop a predictive machine learning model using SageMaker-Extension to classify failures according to whether they are related to APS, or not. 
+In this use case,  it is proposed to develop a predictive machine learning model using our SageMaker-Extension to classify failures according to whether they are related to APS, or not. 
 
 ### 3.1 Load the Dataset
-The following python script downloads the train and test datasets as csv files 
+The following python script downloads the train and test datasets as CSV files 
 to the local file system. Then it creates `TRAIN` and `TEST` tables in the 
 specified `DATABASE_SCHEMA` of Exasol and imports the downloaded csv files 
 to these tables respectively.
@@ -269,8 +269,8 @@ print(f"Imported {exasol.last_statement().rowcount()} rows into TEST.")
 ### 3.2 Train with SageMaker Autopilot
 
 When you execute the SQL command to train a model, the Exasol SageMaker-Extension 
-securely exports the specified table from Exasol Database to your specified 
-AWS S3 bucket. This exporting operation is highly efficient, as it is performed 
+securely exports the specified table from the Exasol Database to your specified 
+AWS S3 bucket. This export operation is highly efficient, as it is performed 
 in parallel. After that the execution script calls Amazon SageMaker Autopilot, 
 which automatically perform an end-to end machine learning development, 
 to build a model. The following figure indicates this solution. 
@@ -315,7 +315,7 @@ EXECUTE SCRIPT IDA."SME_TRAIN_WITH_SAGEMAKER_AUTOPILOT"(
 }');
 ```
 
-This SQL command does not wait for the jobs to finish after calling Autopilot 
+This SQL command does not wait for the job to finish after calling Autopilot 
 and completes its execution. The metadata information of the created Autopilot
 job is saved into the `SME_METADATA_AUTOPILOT_JOBS` table. You can query this 
 table as follows:
