@@ -48,7 +48,8 @@ the auxiliary scripts provided within the scope of the project. In order to
 perform prediction on a trained Autopilot model, one of the methods is to 
 deploy the model to the real-time AWS endpoint. This extension provides Lua 
 scripts for creating/deleting real-time endpoint and creates a model-specific 
-UDF script for making real-time predictions.
+UDF script for making real-time predictions. The following figure
+indicates the overview of this solution.
 
 ![SME Overview](./images/sme_overview.png)
 
@@ -70,6 +71,7 @@ DATABASE_HOST="127.0.0. 1"
 DATABASE_PORT=9563
 DATABASE_USER="sys"
 DATABASE_PASSWORD="exasol"
+DATABASE_SCHEMA="IDA"
 BUCKETFS_PORT=6666
 BUCKETFS_USER="w"
 BUCKETFS_PASSWORD="write"
@@ -80,8 +82,8 @@ CONTAINER_NAME="exasol_sagemaker_extension_container-release"
 CONTAINER_FILE="exasol_sagemaker_extension_container-release.tar.gz"
 ```
 
-- The sagemaker-extension python package ****provides a command line tool to 
-deploy the Lua and UDF scripts to the database.**** It is installed as follows 
+- The sagemaker-extension python package provides a command line tool to 
+deploy the Lua and UDF scripts to the database. It is installed as follows 
 (Please check [the latest release](https://github.com/exasol/sagemaker-extension/releases/latest)):
     ```buildoutcfg
     pip install https://github.com/exasol/sagemaker-extension/releases/download/<version>/exasol_sagemaker_extension-<version>-py3-none-any.whl
@@ -128,27 +130,36 @@ python -m exasol_sagemaker_extension.deployment.deploy_cli \
     --schema <DATABASE_SCHEMA>
 ```
 
-After running this deployment command, you should be able to find the 
-Lua and UDF scripts listed below in the specified schema:
+After running this deployment command, you should be able to find all the 
+required Lua and UDF scripts in the specified schema. To check this, you can 
+run the following query: 
+```buildoutcfg
+SELECT 
+    SCRIPT_NAME , 
+    SCRIPT_TYPE 
+FROM 
+    SYS.EXA_ALL_SCRIPTS 
+WHERE 
+    SCRIPT_SCHEMA='IDA';
+```
 
-- Lua Scripts:
-  - _SME_TRAIN_WITH_SAGEMAKER_AUTOPILOT_
-  - _SME_POLL_SAGEMAKER_AUTOPILOT_JOB_STATUS_
-  - _SME_DEPLOY_SAGEMAKER_AUTOPILOT_ENDPOINT_
-  - _SME_DELETE_SAGEMAKER_AUTOPILOT_ENDPOINT_
-- UDF Scripts:
-  - _SME_AUTOPILOT_TRAINING_UDF_
-  - _SME_AUTOPILOT_JOB_STATUS_POLLING_UDF_
-  - _SME_AUTOPILOT_ENDPOINT_DEPLOYMENT_UDF_
-  - _SME_AUTOPILOT_ENDPOINT_DELETION_UDF_
-
+|SCRIPT_NAME                            |SCRIPT_TYPE|
+|---------------------------------------|-----------|
+|SME_TRAIN_WITH_SAGEMAKER_AUTOPILOT     |SCRIPTING  |
+|SME_AUTOPILOT_TRAINING_UDF             |UDF        |
+|SME_POLL_SAGEMAKER_AUTOPILOT_JOB_STATUS|SCRIPTING  |
+|SME_AUTOPILOT_JOB_STATUS_POLLING_UDF   |UDF        |
+|SME_DEPLOY_SAGEMAKER_AUTOPILOT_ENDPOINT|SCRIPTING  |
+|SME_AUTOPILOT_ENDPOINT_DEPLOYMENT_UDF  |UDF        |
+|SME_DELETE_SAGEMAKER_AUTOPILOT_ENDPOINT|SCRIPTING  |
+|SME_AUTOPILOT_ENDPOINT_DELETION_UDF    |UDF        |
 
 ### 2.3 Create Connection to AWS
 
 The Exasol SageMaker Extension needs to connect to AWS SageMaker and your AWS S3 bucket. 
 For that, it needs AWS credentials that has AWS Sagemaker Execution permissions. 
 The required credentials are AWS Access Key (Please check how to 
-[create an access key pair](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)).
+[create an access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)).
 
 
 In order for the SageMaker-Extension to use the Access Key, you need to create 
@@ -156,12 +167,15 @@ an Exasol `CONNECTION` object which securely stores your keys. For more informat
 please check [Create Connection in Exasol](https://docs.exasol.com/sql/create_connection.htm?Highlight=connection):  
 
 
-Before creating the connection object, let's define the variables for the AWS connection (Please note, that you need to use your own credentials for below variables.)
+Before creating the connection object, let's define the variables for the 
+AWS connection (Please note, that you need to use your own credentials for 
+below variables.)
 ```buildoutcfg
 AWS_BUCKET="ida_dataset_bucket"
 AWS_REGION="eu-central-1"
 AWS_KEY_ID="*****"
 AWS_ACCESS_KEY="*****"
+AWS_CONNECTION_NAME="AWS_CONNECTION"
 ```
 
 The Exasol `CONNECTION` object object is created as follows: 
@@ -173,17 +187,190 @@ The Exasol `CONNECTION` object object is created as follows:
   ```  
 
 
-
 ## 3. Use Case
-The dataset, provided by Scania CV AB, consists of real data .
-...
+In the use case, the publicly available [Air pressure system failures in Scania trucks](https://archive.ics.uci.edu/ml/datasets/IDA2016Challenge) 
+dataset is used. The dataset is  provided by  Scania CV AB as a challenge 
+dataset in Industrial Challenge at the [15th International Symposium on 
+Intelligent Data Analysis (IDA)](https://ida2016.blogs.dsv.su.se/) in 2016.
+
+The dataset consists of data collected from heavy Scania trucks in everyday usage. The dataset includes two different class accroding to Air Pressure system (APS): (1) The positive class 
+consists of component failures for a specific component of the APS system. (2) The negative class consists of trucks with failures for components not related to the APS. 
+
+In this use case,  it is proposed to develop a predictive machine learning model using SageMaker-Extension to classify failures according to whether they are related to APS, or not. 
+
+### 3.1 Load the Dataset
+The following python script downloads the train and test datasets as csv files 
+to the local file system. Then it creates `TRAIN` and `TEST` tables in the 
+specified `DATABASE_SCHEMA` of Exasol and imports the downloaded csv files 
+to these tables respectively.
+
+```buildoutcfg
+import pyexasol
+import pandas as pd
+from zipfile import ZipFile
+from urllib.request import urlopen
+
+DATABASE_CONNECTION = "{host}:{port}".format(host=DATABASE_HOST, port=DATABASE_PORT)
+exasol = pyexasol.connect(
+    dsn=DATABASE_CONNECTION,
+    user=DATABASE_USER,
+    password=DATABASE_PASSWORD,
+    compression=True)
+
+DATA_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00414/to_uci.zip"
+TRAINING_FILE = "to_uci/aps_failure_training_set.csv"
+TEST_FILE = "to_uci/aps_failure_test_set.csv"
+
+# Data is preceeded with a 20-line header (copyright & license)
+NUM_SKIP_ROWS = 20
+NA_VALUE = "na"
+
+# Download datasets as csv files
+resp = urlopen(DATA_URL)
+with open('to_uci.zip', 'wb') as f:
+    f.write(resp.read())
+with ZipFile('to_uci.zip') as z:
+    with z.open(TRAINING_FILE, "r") as f:
+        train_set = pd.read_csv(f, skiprows=NUM_SKIP_ROWS, na_values=NA_VALUE)
+    with z.open(TEST_FILE, "r") as f:
+        test_set = pd.read_csv(f, skiprows=NUM_SKIP_ROWS, na_values=NA_VALUE)
+
+# Create the schema if not exists
+exasol.execute(
+    query="CREATE SCHEMA IF NOT EXISTS {schema!i}", 
+    query_params={"schema": DATABASE_SCHEMA})
+
+# Define column names and types
+column_names = list(train_set.columns)
+column_types = ["VARCHAR(3)"] + ["DECIMAL(18,2)"] * (len(column_names) - 1)
+column_desc = [" ".join(t) for t in zip(column_names, column_types)]
+params = {
+    "schema": DATABASE_SCHEMA, 
+    "column_names": column_names, 
+    "column_desc": column_desc}
+
+# Create tables for data
+exasol.execute(
+    query="CREATE OR REPLACE TABLE {schema!i}.TRAIN(" 
+          + ", ".join(column_desc) + ")", 
+    query_params=params)
+exasol.execute(
+    query="CREATE OR REPLACE TABLE {schema!i}.TEST "
+          "LIKE {schema!i}.TRAIN", 
+    query_params=params)
+
+# Import data into Exasol
+exasol.import_from_pandas(train_set, (DATABASE_SCHEMA, "TRAIN"))
+print(f"Imported {exasol.last_statement().rowcount()} rows into TRAIN.")
+exasol.import_from_pandas(test_set, (DATABASE_SCHEMA, "TEST"))
+print(f"Imported {exasol.last_statement().rowcount()} rows into TEST.")
+```
+
+### 3.2 Train with SageMaker Autopilot
+
+When you execute the SQL command to train a model, the Exasol SageMaker-Extension 
+securely exports the specified table from Exasol Database to your specified 
+AWS S3 bucket. This exporting operation is highly efficient, as it is performed 
+in parallel. After that the execution script calls Amazon SageMaker Autopilot, 
+which automatically perform an end-to end machine learning development, 
+to build a model. The following figure indicates this solution. 
+
+![SME Training](./images/sme_training.png)
+
+First, let's define the variables required to execute the training SQL command:
+```buildoutcfg
+JOB_NAME="APSClassifier"
+IAM_SAGEMAKER_ROLE="*****"
+S3_BUCKET_URI="s3://<AWS_BUCKET>" 
+S3_OUTPUT_PATH="ida_dataset_path"
+INPUT_TABLE_NAME="TARGET"
+TARGET_COLUMN="CLASS"
+MAX_CANDIDATES=2
+```
+
+The following command exports the `TRAIN` table  in the `DATABASE_SCHEMA`  using 
+the credentials stored in the `AWS_CONNECTION` into AWS `S3_OUTPUT_PATH`  and 
+enables Autopilot to start a job with the  `JOB_NAME`. Please note that 
+`JOB_NAME`  must be unique to the corresponding account, and it is 
+case-insensitive. In addition,  the maximum number of candidate models is 
+limited to 2 by an optional parameter called `max_candidates`. On the other side, 
+the other optional parameters that are not set in this sample SQL command 
+such as `problem_type`, `objective` ... etc. will be inferenced by Autopilot. 
+For more information please check the [User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md).
 
 
-### 3.1 Train Model
-### 3.2 Poll Training
-### 3.3 Deploy Endpoint
-### 3.4 Predict via Endpoint
-### 3.5 Cleanup
+```buildoutcfg
+EXECUTE SCRIPT IDA."SME_TRAIN_WITH_SAGEMAKER_AUTOPILOT"(
+'{
+    "job_name"                          : "<JOB_NAME>",
+    "aws_credentials_connection_name"   : "<AWS_CONNECTION_NAME>",
+    "aws_region"                        : "<AWS_REGION>",
+    "iam_sagemaker_role"                : "<IAM_SAGEMAKER_ROLE>", 
+    "s3_bucket_uri"                     : "<S3_BUCKET_URI>",
+    "s3_output_path"                    : "<S3_OUTPUT_PATH>",
+    "input_schema_name"                 : "<DATABASE_SCHEMA>",
+    "input_table_or_view_name"          : "<INPUT_TABLE_NAME>",
+    "target_attribute_name"             : "<TARGET_COLUMN>",
+    "max_candidates"                    : <MAX_CANDIDATES>
+}');
+```
+
+This SQL command does not wait for the jobs to finish after calling Autopilot 
+and completes its execution. The metadata information of the created Autopilot
+job is saved into the `SME_METADATA_AUTOPILOT_JOBS` table. You can query this 
+table as follows:
+```buildoutcfg
+SELECT
+    * 
+FROM 
+    IDA."SME_METADATA_AUTOPILOT_JOBS";
+```
+
+|DATETIME                  |JOB_NAME     |AWS_CREDENTIALS_CONNECTION_NAME|S3_BUCKET_URI          |S3_OUTPUT_PATH  |TARGET_ATTRIBUTE_NAME|PROBLEM_TYPE|OBJECTIVE| ... |
+---------------------------|-------------|-------------------------------|-----------------------|----------------|---------------------|------------|---------| --- |
+|2021-11-24-13.35.11.569000|APSClassifier|AWS_CONNECTION                 |s3://ida-dataset-bucket|ida_dataset_path|CLASS                |            |         | ... |
+
+
+### 3.3 Poll Training Status
+As mentioned in the above section, the training SQL script runs asynchronously. 
+Therefore, you don't have to wait the training to finish. However, you can poll 
+the status of the Autopilot training job with the polling SQL script provided 
+by Exasol SageMaker-Extension. This SQL command takes the name of the job 
+whose status will be queried, namely `JOB_NAME`, as input and returns the 
+current status of the job. For more information please check the 
+[User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md). 
+You can execute the polling SQL command as follows:
+
+```buildoutcfg
+EXECUTE SCRIPT IDA."SME_POLL_SAGEMAKER_AUTOPILOT_JOB_STATUS"(
+	'<JOB_NAME>',
+	'<AWS_CONNECTION_NAME>', 
+	'<AWS_REGION>'
+);
+```
+
+You can below see the sample results of this polling SQL command executed 
+several times while the "APSClassifier" training job is running:
+
+|JOB_STATUS|JOB_SECONDARY_STATUS|
+|----------|--------------------|
+|InProgress|AnalyzingData       |
+
+
+|JOB_STATUS|JOB_SECONDARY_STATUS|
+|----------|--------------------|
+|InProgress|FeatureEngineering  |
+
+
+|JOB_STATUS|JOB_SECONDARY_STATUS|
+|----------|--------------------|
+|Completed |Completed           |
+
+### 3.4 Deploy Sagemaker Endpoint
+
+### 3.5 Predict via Endpoint
+
+### 3.6 Delete Endpoint
 
 
 
