@@ -8,7 +8,7 @@ The Exasol Sagemaker Extension enables you to develop an end-to-end machine
 learning project on data stored in Exasol using the AWS SageMaker Autopilot service.
 
 The use-case handles a publicly available real-world dataset provided by a heavy 
-truck manufacturer (see (Use Case)[#use-case]). With the 
+truck manufacturer (see [Use Case](#use-case)). With the 
 provided extension, a machine learning model is developed which allows 
 predicting  whether the truck failures are related to a particular component.
 
@@ -66,7 +66,7 @@ of the Github repository.
 Before starting the installation, let's define the variables required for the 
 installation (Please note that you need to change variables below to use your 
 own Exasol Database):
-```buildoutcfg
+```python
 DATABASE_HOST="127.0.0. 1"
 DATABASE_PORT=9563
 DATABASE_USER="sys"
@@ -133,7 +133,7 @@ python -m exasol_sagemaker_extension.deployment.deploy_cli \
 After running this deployment command, you should be able to find all the 
 required Lua and UDF scripts in the specified schema. To check this, you can 
 run the following query: 
-```buildoutcfg
+```sql
 SELECT 
     SCRIPT_NAME , 
     SCRIPT_TYPE 
@@ -168,9 +168,9 @@ please check [Create Connection in Exasol](https://docs.exasol.com/sql/create_co
 
 
 Before creating the connection object, let's define the variables for the 
-AWS connection (Please note, that you need to use your own credentials for 
+AWS connection (Please note that you need to use your own credentials for 
 below variables.)
-```buildoutcfg
+```python
 AWS_BUCKET="ida_dataset_bucket"
 AWS_REGION="eu-central-1"
 AWS_KEY_ID="*****"
@@ -179,12 +179,12 @@ AWS_CONNECTION_NAME="AWS_CONNECTION"
 ```
 
 The Exasol `CONNECTION` object object is created as follows: 
-  ```buildoutcfg
-  CREATE OR REPLACE  CONNECTION <CONNECTION_NAME>
-      TO 'https://<AWS_BUCKET>.s3.<AWS_REGION>.amazonaws.com/''
-      USER '<AWS_KEY_ID>'
-      IDENTIFIED BY '<AWS_ACCESS_KEY>'
-  ```  
+```sql
+CREATE OR REPLACE  CONNECTION <CONNECTION_NAME>
+    TO 'https://<AWS_BUCKET>.s3.<AWS_REGION>.amazonaws.com/''
+    USER '<AWS_KEY_ID>'
+    IDENTIFIED BY '<AWS_ACCESS_KEY>'
+```
 
 
 ## 3. Use Case
@@ -193,7 +193,7 @@ dataset is used. The dataset is  provided by  Scania CV AB as a challenge
 dataset in Industrial Challenge at the [15th International Symposium on 
 Intelligent Data Analysis (IDA)](https://ida2016.blogs.dsv.su.se/) in 2016.
 
-The dataset consists of data collected from heavy Scania trucks in everyday usage. The dataset includes two different class accroding to Air Pressure system (APS): (1) The positive class 
+The dataset consists of data collected from heavy Scania trucks in everyday usage. The dataset includes two different classes accroding to Air Pressure system (APS): (1) The positive class 
 consists of component failures for a specific component of the APS system. (2) The negative class consists of trucks with failures for components not related to the APS. 
 
 In this use case,  it is proposed to develop a predictive machine learning model using our SageMaker-Extension to classify failures according to whether they are related to APS, or not. 
@@ -204,7 +204,7 @@ to the local file system. Then it creates `TRAIN` and `TEST` tables in the
 specified `DATABASE_SCHEMA` of Exasol and imports the downloaded csv files 
 to these tables respectively.
 
-```buildoutcfg
+```python
 import pyexasol
 import pandas as pd
 from zipfile import ZipFile
@@ -269,7 +269,7 @@ print(f"Imported {exasol.last_statement().rowcount()} rows into TEST.")
 ### 3.2 Train with SageMaker Autopilot
 
 When you execute the SQL command to train a model, the Exasol SageMaker-Extension 
-securely exports the specified table from the Exasol Database to your specified 
+exports the specified table from the Exasol Database to your specified 
 AWS S3 bucket. This export operation is highly efficient, as it is performed 
 in parallel. After that the execution script calls Amazon SageMaker Autopilot, 
 which automatically perform an end-to end machine learning development, 
@@ -278,7 +278,7 @@ to build a model. The following figure indicates this solution.
 ![SME Training](./images/sme_training.png)
 
 First, let's define the variables required to execute the training SQL command:
-```buildoutcfg
+```python
 JOB_NAME="APSClassifier"
 IAM_SAGEMAKER_ROLE="*****"
 S3_BUCKET_URI="s3://<AWS_BUCKET>" 
@@ -299,7 +299,7 @@ such as `problem_type`, `objective` ... etc. will be inferenced by Autopilot.
 For more information please check the [User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md).
 
 
-```buildoutcfg
+```sql
 EXECUTE SCRIPT IDA."SME_TRAIN_WITH_SAGEMAKER_AUTOPILOT"(
 '{
     "job_name"                          : "<JOB_NAME>",
@@ -319,7 +319,7 @@ This SQL command does not wait for the job to finish after calling Autopilot
 and completes its execution. The metadata information of the created Autopilot
 job is saved into the `SME_METADATA_AUTOPILOT_JOBS` table. You can query this 
 table as follows:
-```buildoutcfg
+```sql
 SELECT
     * 
 FROM 
@@ -341,11 +341,11 @@ current status of the job. For more information please check the
 [User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md). 
 You can execute the polling SQL command as follows:
 
-```buildoutcfg
+```sql
 EXECUTE SCRIPT IDA."SME_POLL_SAGEMAKER_AUTOPILOT_JOB_STATUS"(
-	'<JOB_NAME>',
-	'<AWS_CONNECTION_NAME>', 
-	'<AWS_REGION>'
+  '<JOB_NAME>',
+  '<AWS_CONNECTION_NAME>', 
+  '<AWS_REGION>'
 );
 ```
 
@@ -367,10 +367,116 @@ several times while the "APSClassifier" training job is running:
 |Completed |Completed           |
 
 ### 3.4 Deploy Sagemaker Endpoint
+In order to perform prediction on a trained Autopilot model, one of the methods 
+is to deploy the model to the real-time AWS SageMaker endpoint. You can use the 
+deployment SQL command to create a real-time endpoint and deploy the best 
+candidate  model of the trained Autopilot jobs on it. The deployment SQL command 
+additionally generates the prediction UDF script which is specific to the 
+deployed endpoint so that you are able to perform real-time predictions.
+The following figure indicates this solution. 
 
-### 3.5 Predict via Endpoint
+![SME Training](./images/sme_deployment.png)
+
+First, let's define the variables required to execute the deployment SQL command:
+```python
+ENDPOINT_NAME="APSPredictor"
+INSTANCE_TYPE="ml.m5.large"
+INSTANCE_COUNT=1 
+DATABASE_PRED_SCHEMA="IDAPrediction"
+```
+
+The following deployment SQL command creates a SageMaker endpoint called 
+`EDNPOINT_NAME` and deploys the best model of `JOB_NAME` on it. Please keep 
+in mind that the `ENDPOINT_NAME` is also the name of the UDF script generated 
+for the prediction. Furthermore, you can specify a different schema 
+(`DATABASE_PRED_SCHEMA`) for the prediction UDF script to be installed 
+than the one in which the scripts of the Exasol SageMaker-Extension project 
+are deployed. For more information please check the 
+[User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md). 
+You can execute the deployment script with the defined variables as follows:
+
+```sql
+EXECUTE SCRIPT IDA."SME_DEPLOY_SAGEMAKER_AUTOPILOT_ENDPOINT"(
+  '<JOB_NAME>', 
+  '<ENDPOINT_NAME>', 
+  '<DATABASE_PRED_SCHEMA>', 
+  '<INSTANCE_TYPE>',  
+  <INSTANCE_COUNT>, 
+  '<AWS_CONNECTION_NMAE>', 
+  '<AWS_REGION>'
+);
+```
+
+You should be able to see the created UDF script for prediction, as follows:
+
+```sql
+SELECT 
+  SCRIPT_NAME,
+  SCRIPT_LANGUAGE
+FROM 
+  SYS.EXA_ALL_SCRIPTS
+WHERE 
+  SCRIPT_SCHEMA = 'IDAPrediction'
+  AND SCRIPT_TYPE = 'UDF'
+
+```
+
+|SCRIPT_NAME                          |SCRIPT_LANGUAGE|
+|-------------------------------------|---------------|
+|APSPredictor                         |PYTHON3_SME    |
+
+### 3.5 Predict via SageMaker Endpoint
+
+The Exasol SageMaker-Extension generates a prediction UDF for each model, 
+enabling you to perform prediction on the deployed endpoint. The name of the 
+prediction script is the same as the name of the endpoint (`ENDPOINT_NAME`) 
+specified when creating the endpoint. 
+
+The prediction UDF makes a real-time  and synchronous call to the SageMaker 
+endpoint. The prediction SQL command takes all the columns used while 
+creating the model as inputs, appends the prediction result to these columns and 
+the response is returned immediately. For more information please check the 
+[User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md).
+You can  make prediction for this use case as follows:
+
+```sql
+SELECT IDAPrediction."APSPredictor"(
+  AA_000,AB_000,AC_000,AD_000,AE_000,AF_000,AG_000,
+  ...
+  EE_005,EE_006,EE_007,EE_008,EE_009,EF_000,EG_000
+) FROM IDA.TEST;
+```
+
+|AA_000    |AB_000|AC_000       |AD_000 |AE_000 |AF_000 |AG_000| ...  |PREDICTIONS |
+|----------|------|-------------|-------|-------|-------|------|------|------------|
+|  79492.00|      |         0.00|       |   0.00|   0.00|  0.00| ...  |         neg|
+|  41026.00|      |       518.00| 392.00|   0.00|   0.00|  0.00| ...  |         neg|
+|  43728.00|  0.00|2130706432.00| 144.00| 522.00| 142.00|  0.00| ...  |         neg|
+|  55896.00|      |        74.00|  70.00|   0.00|   0.00|  0.00| ...  |         neg|
+|  40122.00|      |       232.00| 210.00|   0.00|   0.00|  0.00| ...  |         neg|
+|       ...|   ...|          ...|    ...|    ...|    ...|   ...| ...  |         ...|
+
 
 ### 3.6 Delete Endpoint
+It is important to delete the endpoint created, when you are finished with the 
+endpoint Otherwise, the endpoint will continue to be charged. You can use the 
+following SQL command to delete the endpoint and associated resources.
 
+```sql
+EXECUTE SCRIPT IDA."SME_DELETE_SAGEMAKER_AUTOPILOT_ENDPOINT"(
+  '<ENDPOINT_NAME>', 
+  '<AWS_CONNECTION_NAME>', 
+  '<AWS_REGION>'
+ ); 
+```
 
+## 4.Conclusion
+In this tutorial, we went through each steps of the installation and deployment 
+of the Exasol SageMaker-Extension, and examined in detail that how it works on 
+a real-world problem.
 
+The Exasol SageMaker-Extension provides a simple installation with the 
+pre-packaged releases and perform a functional deployment with an easy-to-use 
+cli tool. The SQL commands which come with the deployment enable you to create 
+the machine learning model of the table you want using the SageMaker Autopilot 
+service and make your predictions. 
