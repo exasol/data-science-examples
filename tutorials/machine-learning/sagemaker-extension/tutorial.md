@@ -85,7 +85,7 @@ CONTAINER_FILE="exasol_sagemaker_extension_container-release.tar.gz"
 - The sagemaker-extension python package provides a command line tool to 
 deploy the Lua and UDF scripts to the database. It is installed as follows 
 (Please check [the latest release](https://github.com/exasol/sagemaker-extension/releases/latest)):
-    ```buildoutcfg
+    ```sh
     pip install https://github.com/exasol/sagemaker-extension/releases/download/<version>/exasol_sagemaker_extension-<version>-py3-none-any.whl
     ```
 
@@ -95,7 +95,7 @@ Container to the BucketFS. You can upload it with any http(s) client that can se
 files via HTTP-Put requests. For more details please check 
 [Access Files in BucketFS](https://docs.exasol.com/database_concepts/bucketfs/file_access.htm). 
 The following example uploads the pre-built SageMaker-Extension Container to BucketFS with the curl command, a http(s) client:
-    ```buildoutcfg
+    ```sh
     curl -vX PUT -T \ 
         "<CONTAINER_FILE>" 
         "http://w:<BUCKETFS_WRITE_PASS>@$bucketfs_host:<BUCKETFS_PASS>/<BUCKETFS_NAME>/<PATH_IN_BUCKET><CONTAINER_FILE>"
@@ -107,7 +107,7 @@ the name of the language alias is assumed to be `PYTHON_SME` in the
 SageMaker-Extension. For more details, please check 
 [Adding New Packages to Existing Script Languages](https://docs.exasol.com/database_concepts/udf_scripts/adding_new_packages_script_languages.htm).
 The following example query activates the container session-wide:
-    ```buildoutcfg
+    ```sh
     ALTER SESSION SET SCRIPT_LANGUAGES=\
     'PYTHON_SME=localzmq+protobuf:///<BUCKETFS_NAME>/<BUCKET_NAME>/<PATH_IN_BUCKET><CONTAINER_NAME>/?\
             lang=python#buckets/<BUCKETFS_NAME>/<BUCKET_NAME>/<PATH_IN_BUCKET><CONTAINER_NAME>/\
@@ -121,7 +121,7 @@ The installed SageMaker-extension python package provides a command line tool, e
 you to deploy all necessary Lua and UDF scripts into the specified 
 `DATABASE_SCHEMA` of Exasol Database. The command line is run as follows: 
 
-```buildoutcfg
+```sh
 python -m exasol_sagemaker_extension.deployment.deploy_cli \
     --host <DATABASE_HOST> \ 
     --port <DATABASE_PORT> \
@@ -179,7 +179,7 @@ AWS_CONNECTION_NAME="AWS_CONNECTION"
 ```
 
 The Exasol `CONNECTION` object object is created as follows: 
-```sql
+```sh
 CREATE OR REPLACE  CONNECTION <CONNECTION_NAME>
     TO 'https://<AWS_BUCKET>.s3.<AWS_REGION>.amazonaws.com/''
     USER '<AWS_KEY_ID>'
@@ -299,7 +299,7 @@ such as `problem_type`, `objective` ... etc. will be inferenced by Autopilot.
 For more information please check the [User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md).
 
 
-```sql
+```sh
 EXECUTE SCRIPT IDA."SME_TRAIN_WITH_SAGEMAKER_AUTOPILOT"(
 '{
     "job_name"                          : "<JOB_NAME>",
@@ -341,7 +341,7 @@ current status of the job. For more information please check the
 [User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md). 
 You can execute the polling SQL command as follows:
 
-```sql
+```sh
 EXECUTE SCRIPT IDA."SME_POLL_SAGEMAKER_AUTOPILOT_JOB_STATUS"(
   '<JOB_NAME>',
   '<AWS_CONNECTION_NAME>', 
@@ -395,7 +395,7 @@ are deployed. For more information please check the
 [User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md). 
 You can execute the deployment script with the defined variables as follows:
 
-```sql
+```sh
 EXECUTE SCRIPT IDA."SME_DEPLOY_SAGEMAKER_AUTOPILOT_ENDPOINT"(
   '<JOB_NAME>', 
   '<ENDPOINT_NAME>', 
@@ -462,7 +462,7 @@ It is important to delete the endpoint created, when you are finished with the
 endpoint Otherwise, the endpoint will continue to be charged. You can use the 
 following SQL command to delete the endpoint and associated resources.
 
-```sql
+```sh
 EXECUTE SCRIPT IDA."SME_DELETE_SAGEMAKER_AUTOPILOT_ENDPOINT"(
   '<ENDPOINT_NAME>', 
   '<AWS_CONNECTION_NAME>', 
