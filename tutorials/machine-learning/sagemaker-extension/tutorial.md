@@ -102,7 +102,7 @@ The following example uploads the pre-built SageMaker-Extension Container to Buc
     ```
 
 - You need to activate the uploaded container  for your session or the whole system through 
-adjusting parameter `SCRIPT_LANGUAGES`.  Please, keep in mind that 
+adjusting parameter `SCRIPT_LANGUAGES`.  Please keep in mind, that 
 the name of the language alias is assumed to be `PYTHON_SME` in the 
 SageMaker-Extension. For more details, please check 
 [Adding New Packages to Existing Script Languages](https://docs.exasol.com/database_concepts/udf_scripts/adding_new_packages_script_languages.htm).
@@ -117,9 +117,10 @@ The following example query activates the container session-wide:
 
 ### 2.2 Deployment
 
-The installed SageMaker-extension python package provides a command line tool, enabling 
-you to deploy all necessary Lua and UDF scripts into the specified 
-`DATABASE_SCHEMA` of Exasol Database. The command line is run as follows: 
+The installed SageMaker-extension python package provides a command-line 
+interface (CLI), enabling you to deploy all necessary Lua and UDF scripts into 
+the specified `DATABASE_SCHEMA` of Exasol Database. The command line is run 
+as follows: 
 
 ```sh
 python -m exasol_sagemaker_extension.deployment.deploy_cli \
@@ -387,7 +388,7 @@ DATABASE_PRED_SCHEMA="IDAPrediction"
 
 The following deployment SQL command creates a SageMaker endpoint called 
 `EDNPOINT_NAME` and deploys the best model of `JOB_NAME` on it. Please keep 
-in mind that the `ENDPOINT_NAME` is also the name of the UDF script generated 
+in mind, that the `ENDPOINT_NAME` is also the name of the UDF script generated 
 for the prediction. Furthermore, you can specify a different schema 
 (`DATABASE_PRED_SCHEMA`) for the prediction UDF script to be installed 
 than the one in which the scripts of the Exasol SageMaker-Extension project 
@@ -435,7 +436,7 @@ specified when creating the endpoint.
 The prediction UDF makes a real-time  and synchronous call to the SageMaker 
 endpoint. The prediction SQL command takes all the columns used while 
 creating the model as inputs, appends the prediction result to these columns and 
-the response is returned immediately. For more information please check the 
+the response is returned immediately. For more information, please check the 
 [User Guide](https://github.com/exasol/sagemaker-extension/blob/main/doc/user_guide/user_guide.md).
 You can  make prediction for this use case as follows:
 
@@ -444,7 +445,9 @@ SELECT IDAPrediction."APSPredictor"(
   AA_000,AB_000,AC_000,AD_000,AE_000,AF_000,AG_000,
   ...
   EE_005,EE_006,EE_007,EE_008,EE_009,EF_000,EG_000
-) FROM IDA.TEST;
+) FROM IDA.TEST
+GROUP BY IPROC(),
+MOD(ROWNUM, 6));
 ```
 
 |AA_000    |AB_000|AC_000       |AD_000 |AE_000 |AF_000 |AG_000| ...  |PREDICTIONS |
@@ -456,6 +459,9 @@ SELECT IDAPrediction."APSPredictor"(
 |  40122.00|      |       232.00| 210.00|   0.00|   0.00|  0.00| ...  |         neg|
 |       ...|   ...|          ...|    ...|    ...|    ...|   ...| ...  |         ...|
 
+Please keep in mind, that yyou can get high efficiency by executing the prediction 
+UDF script using the `GROUP BY IPROC()` statement, which allows you to perform 
+predictions on each node in parallel. 
 
 ### 3.6 Delete Endpoint
 It is important to delete the endpoint created, when you are finished with the 
@@ -472,11 +478,11 @@ EXECUTE SCRIPT IDA."SME_DELETE_SAGEMAKER_AUTOPILOT_ENDPOINT"(
 
 ## 4.Conclusion
 In this tutorial, we went through each steps of the installation and deployment 
-of the Exasol SageMaker-Extension, and examined in detail that how it works on 
+of the Exasol SageMaker-Extension, and examined in detail how it works on 
 a real-world problem.
 
 The Exasol SageMaker-Extension provides a simple installation with the 
 pre-packaged releases and perform a functional deployment with an easy-to-use 
-cli tool. The SQL commands which come with the deployment enable you to create 
+CLI tool. The SQL commands which come with the deployment enable you to create 
 the machine learning model of the table you want using the SageMaker Autopilot 
 service and make your predictions. 
