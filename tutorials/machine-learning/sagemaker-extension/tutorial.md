@@ -447,7 +447,7 @@ SELECT IDAPrediction."APSPredictor"(
   EE_005,EE_006,EE_007,EE_008,EE_009,EF_000,EG_000
 ) FROM IDA.TEST
 GROUP BY IPROC(),
-MOD(ROWNUM, 6));
+MOD(ROWNUM, 6);
 ```
 
 |AA_000    |AB_000|AC_000       |AD_000 |AE_000 |AF_000 |AG_000| ...  |PREDICTIONS |
@@ -459,14 +459,14 @@ MOD(ROWNUM, 6));
 |  40122.00|      |       232.00| 210.00|   0.00|   0.00|  0.00| ...  |         neg|
 |       ...|   ...|          ...|    ...|    ...|    ...|   ...| ...  |         ...|
 
-Please keep in mind, that yyou can get high efficiency by executing the prediction 
+Please keep in mind, that you can get high efficiency by executing the prediction 
 UDF script using the `GROUP BY IPROC()` statement, which allows you to perform 
 predictions on each node in parallel. 
 
 ### 3.6 Delete Endpoint
 It is important to delete the endpoint created, when you are finished with the 
 endpoint Otherwise, the endpoint will continue to be charged. You can use the 
-following SQL command to delete the endpoint and associated resources.
+following SQL command to delete the endpoint and associated resources:
 
 ```sh
 EXECUTE SCRIPT IDA."SME_DELETE_SAGEMAKER_AUTOPILOT_ENDPOINT"(
@@ -475,6 +475,10 @@ EXECUTE SCRIPT IDA."SME_DELETE_SAGEMAKER_AUTOPILOT_ENDPOINT"(
   '<AWS_REGION>'
  ); 
 ```
+
+Please note, that  by the execution of the deletion SQL command, the predicted 
+UDF script will not be deleted and will not be able to run until the endpoint 
+is restarted.
 
 ## 4.Conclusion
 In this tutorial, we went through each steps of the installation and deployment 
