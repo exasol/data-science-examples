@@ -13,7 +13,7 @@ def identity_column(key,
                     dtype=dtypes.string, ):
     shape = _check_shape(shape, key)
     _assert_key_is_string(key)
-    return IdentityColumn(key,shape=shape,dtype=dtype)
+    return IdentityColumn(key, shape=shape, dtype=dtype)
 
 
 class IdentityColumn(
