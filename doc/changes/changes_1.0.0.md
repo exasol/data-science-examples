@@ -8,3 +8,7 @@
 * # 34: Added an example for loading example data into the Exasol database 
 * # 43: Updated to Python3.8 minimal flavor in script-languages tutorial
 
+## Bugs
+
+* # 53: Fixed error_code_config.yaml
+
