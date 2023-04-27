@@ -16,15 +16,13 @@ def main():
     parser.add_argument("--train_data", type=str, help="path to input train data")
     parser.add_argument("--validation_data", type=str, help="path to input validation data")
     parser.add_argument("--test_data", type=str, help="path to input test data")
-    parser.add_argument("--n_estimators", required=False, default=100, type=int)
     parser.add_argument("--learning_rate", required=False, default=0.1, type=float)
-    parser.add_argument("--registered_model_name", type=str, help="model name")
     args = parser.parse_args()
 
     print(" ".join(f"{k}={v}" for k, v in vars(args).items()))
 
     train_df_no_scale = pd.read_csv(args.train_data,
-                                    header=0)  # todo change to not read whole csv at once?(datafactory oder FileDataset)
+                                    header=0)
     val_df_no_scale = pd.read_csv(args.validation_data, header=0)
     test_df_no_scale = pd.read_csv(args.test_data, header=0)
 
@@ -43,15 +41,14 @@ def main():
 
     initial_bias, class_weight = get_weight_bias(train_df)
 
-    _, _, _ = get_class_balance(val_df)
-    _, _, _ = get_class_balance(test_df)
+    get_class_balance(val_df)
+    get_class_balance(test_df)
 
     batch_size = 256
     train_ds = df_to_dataset(train_df, batch_size=batch_size)
     val_ds = df_to_dataset(val_df, shuffle=False, batch_size=batch_size)
     test_ds = df_to_dataset(test_df, shuffle=False, batch_size=batch_size)
 
-    train_ds.element_spec
     attribute_number = 42
     inputs = tf.keras.Input(shape=(attribute_number,))
 
@@ -65,7 +62,9 @@ def main():
 
     model = tf.keras.Model(inputs, output)
 
-    model.compile(optimizer='adam',
+    optimizer_A = tf.keras.optimizers.Adam(learning_rate=args.learning_rate, name='Adam')
+
+    model.compile(optimizer=optimizer_A,
                   loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
                   metrics=["accuracy",
                            tf.keras.metrics.FalsePositives(), tf.keras.metrics.TruePositives(),
