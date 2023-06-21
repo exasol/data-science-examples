@@ -29,7 +29,7 @@ def main():
     args = parser.parse_args()
     print(" ".join(f"{k}={v}" for k, v in vars(args).items()))
 
-    # read the data from the AzureML Blobstorage. This is a good way for the data used for this example,
+    # read the data from the AzureML Blob Storage. This is a good way for the data used for this example,
     # but for your own data another approach might be better. Check here for more info:
     # https://learn.microsoft.com/en-us/azure/machine-learning/how-to-read-write-data-v2?view=azureml-api-2&tabs=cli
     train_df_no_scale = pd.read_csv(args.train_data, header=0)
@@ -38,47 +38,42 @@ def main():
     train_data_and_labels = get_labels(train_df_no_scale, class_col_name='CLASS_POS')
     test_data_and_labels = get_labels(test_df_no_scale, class_col_name='CLASS_POS')
 
-    # data preparation: normalization, removing nans from dataset(important for back propagation),
+    # get transformer for data preparation:
+    #   normalization, removing nans from dataset(important for back propagation),
     _, transformer = get_transformer(train_data_and_labels)
 
-    # set learning rate and compile model.
+    # build classifier and find best training parameters
     clf, grid_search = build_et_classifier(train_data_and_labels, transformer)
     print(grid_search.best_params_['n_estimators'])
     print(grid_search.best_params_['max_depth'])
     print(str(grid_search.best_params_['class_weight']))
 
-    # Train and evaluate the model. output can be found in the logs of the AzureML job run.
+    # Train and evaluate the model.
     clf.fit(train_data_and_labels[1], train_data_and_labels[0].ravel())
 
+    # Evaluate the trained classifier using test data. Output can be found in the logs of the AzureML job run.
     y_pred = test_eval(test_data_and_labels, clf)
 
-    # save the trained model.
-    # files saved in the "./outputs" folder are automatically uploaded into run history
-    # os.makedirs("./outputs/model", exist_ok=True)
-    # with open("./outputs/model/sklearn_model", 'wb+') as file:
-    #     pickle.dump(clf, file)
+    # Save the trained model and register it with AzureML Workspace
     mlflow.sklearn.log_model(
         sk_model=clf,
         registered_model_name="registered_model_name_sklearn",
         artifact_path="./outputs/model/sklearn_model_sklearn_save"
     )
 
-
+# get class labels from dataset
 def get_labels(df, class_col_name):
     y = df.loc[:, class_col_name]
     X_data = df.loc[:, df.columns != class_col_name]
     return [y, X_data]
 
-
+# get transformer and train for data preprocessing
 def get_transformer(data_and_labels):
     transformer = Pipeline([
         ('imputer', SimpleImputer(strategy="median")),
         ('scaler', StandardScaler())
     ])
     train_df_transformed = transformer.fit_transform(data_and_labels[1])
-    os.makedirs("./outputs/transformer/sklearn_transformer_sklearn_save", exist_ok=True)
-    # with open("./outputs/transformer/sklearn_tansformer", 'wb+') as file:
-    #     pickle.dump(transformer, file)
     return train_df_transformed, transformer
 
 
@@ -114,6 +109,8 @@ def build_et_classifier(data_and_labels, transformer):
                                max_depth=grid_search.best_params_['max_depth'],
                                class_weight=grid_search.best_params_['class_weight'])
 
+    # fuse the classifier and the transformer into one pipeline.
+    # This guarantees the preprocessing stays the same for each use of the model.
     model = Pipeline([
         ('transform', transformer),
         ('clf', clf)
@@ -121,7 +118,7 @@ def build_et_classifier(data_and_labels, transformer):
 
     return model, grid_search
 
-
+# Evaluate the trained model
 def test_eval(data_and_labels, clf):
     y = data_and_labels[0]
     X_data = data_and_labels[1]
@@ -139,7 +136,7 @@ def test_eval(data_and_labels, clf):
     print("Confusion Matrix:\n", confusion_matrix_df)
 
 
-# Define scoring metric for grid search from problem description
+# Define scoring metric for grid search from problem description of the Scania Trucks dataset
 def ida_score(y, y_pred):
     false_preds = y - y_pred
     num_false_pos = (false_preds < 0).sum()
