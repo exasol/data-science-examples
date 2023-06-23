@@ -3,9 +3,19 @@ import argparse
 
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 
-from tensorflow.keras import layers
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.metrics import make_scorer
+from sklearn.model_selection import ParameterGrid
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import confusion_matrix
+
+import mlflow
+import mlflow.sklearn
 
 
 def main():
@@ -14,136 +24,125 @@ def main():
     # input and output arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--train_data", type=str, help="path to input train data")
-    parser.add_argument("--validation_data", type=str, help="path to input validation data")
     parser.add_argument("--test_data", type=str, help="path to input test data")
     parser.add_argument("--learning_rate", required=False, default=0.1, type=float)
     args = parser.parse_args()
-
     print(" ".join(f"{k}={v}" for k, v in vars(args).items()))
 
-    train_df_no_scale = pd.read_csv(args.train_data,
-                                    header=0)
-    val_df_no_scale = pd.read_csv(args.validation_data, header=0)
+    # read the data from the AzureML Blob Storage. This is a good way for the data used for this example,
+    # but for your own data another approach might be better. Check here for more info:
+    # https://learn.microsoft.com/en-us/azure/machine-learning/how-to-read-write-data-v2?view=azureml-api-2&tabs=cli
+    train_df_no_scale = pd.read_csv(args.train_data, header=0)
     test_df_no_scale = pd.read_csv(args.test_data, header=0)
 
-    train_df = (train_df_no_scale - train_df_no_scale.mean()) / train_df_no_scale.std()
-    val_df = (val_df_no_scale - val_df_no_scale.mean()) / val_df_no_scale.std()
-    test_df = (test_df_no_scale - test_df_no_scale.mean()) / test_df_no_scale.std()
-    train_df['CLASS_POS'] = train_df_no_scale['CLASS_POS']
-    val_df['CLASS_POS'] = val_df_no_scale['CLASS_POS']
-    test_df['CLASS_POS'] = test_df_no_scale['CLASS_POS']
+    train_data_and_labels = get_labels(train_df_no_scale, class_col_name='CLASS_POS')
+    test_data_and_labels = get_labels(test_df_no_scale, class_col_name='CLASS_POS')
 
-    train_df = remove_nans(train_df)
-    val_df = remove_nans(val_df)
+    # get transformer for data preparation:
+    #   normalization, removing nans from dataset(important for back propagation),
+    _, transformer = get_transformer(train_data_and_labels)
 
-    train_df = oversample(train_df)
-    val_df = oversample(val_df)
+    # build classifier and find best training parameters
+    clf, grid_search = build_et_classifier(train_data_and_labels, transformer)
+    print(grid_search.best_params_['n_estimators'])
+    print(grid_search.best_params_['max_depth'])
+    print(str(grid_search.best_params_['class_weight']))
 
-    initial_bias, class_weight = get_weight_bias(train_df)
+    # Train and evaluate the model.
+    clf.fit(train_data_and_labels[1], train_data_and_labels[0].ravel())
 
-    get_class_balance(val_df)
-    get_class_balance(test_df)
+    # Evaluate the trained classifier using test data. Output can be found in the logs of the AzureML job run.
+    y_pred = test_eval(test_data_and_labels, clf)
 
-    batch_size = 256
-    train_ds = df_to_dataset(train_df, batch_size=batch_size)
-    val_ds = df_to_dataset(val_df, shuffle=False, batch_size=batch_size)
-    test_ds = df_to_dataset(test_df, shuffle=False, batch_size=batch_size)
+    # Save the trained model and register it with AzureML Workspace
+    mlflow.sklearn.log_model(
+        sk_model=clf,
+        registered_model_name="registered_model_name_sklearn",
+        artifact_path="./outputs/model/sklearn_model_sklearn_save"
+    )
 
-    attribute_number = 42
-    inputs = tf.keras.Input(shape=(attribute_number,))
+# get class labels from dataset
+def get_labels(df, class_col_name):
+    y = df.loc[:, class_col_name]
+    X_data = df.loc[:, df.columns != class_col_name]
+    return [y, X_data]
 
-    output_bias = tf.keras.initializers.Constant(initial_bias / 2)
-
-    x = tf.keras.layers.Dense(40, activation="relu")(inputs)
-    x = tf.keras.layers.Dense(50, activation="relu")(x)
-    x = tf.keras.layers.Dense(20, activation="relu")(x)
-    x = tf.keras.layers.Dropout(0.075)(x)
-    output = tf.keras.layers.Dense(1, activation='sigmoid', bias_initializer=output_bias)(x)
-
-    model = tf.keras.Model(inputs, output)
-
-    optimizer_A = tf.keras.optimizers.Adam(learning_rate=args.learning_rate, name='Adam')
-
-    model.compile(optimizer=optimizer_A,
-                  loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
-                  metrics=["accuracy",
-                           tf.keras.metrics.FalsePositives(), tf.keras.metrics.TruePositives(),
-                           tf.keras.metrics.TrueNegatives(), tf.keras.metrics.FalseNegatives()])
-
-    model.fit(train_ds, epochs=20, validation_data=val_ds, class_weight=class_weight)
-    loss, accuracy, fp, tp, tn, fn = model.evaluate(test_ds)
-    print("Accuracy", accuracy)
-    print(f"tp {tp}, fp {fp}, tn {tn}, fn {fn}")
-    os.makedirs("./outputs/model", exist_ok=True)
-
-    # files saved in the "./outputs" folder are automatically uploaded into run history
-    # this is workaround for https://github.com/tensorflow/tensorflow/issues/33913 and will be fixed once we move to >tf2.1
-    tf.saved_model.save(model, "./outputs/model/")
+# get transformer and train for data preprocessing
+def get_transformer(data_and_labels):
+    transformer = Pipeline([
+        ('imputer', SimpleImputer(strategy="median")),
+        ('scaler', StandardScaler())
+    ])
+    train_df_transformed = transformer.fit_transform(data_and_labels[1])
+    return train_df_transformed, transformer
 
 
-def oversample(df):
-    cols = df.columns
-    pos_features = df[df['CLASS_POS'] == 1]
-    neg_features = df[df['CLASS_POS'] == 0]
+def build_et_classifier(data_and_labels, transformer):
+    y = data_and_labels[0]
+    X_data = data_and_labels[1]
+    X_data = transformer.transform(X_data)
 
-    ids = np.arange(len(pos_features))
-    choices = np.random.choice(ids, len(neg_features))
+    # Create classifier
+    clf = ExtraTreesClassifier(n_jobs=-1)
 
-    res_pos_features = pos_features.iloc[choices]
-    np_df = np.concatenate([res_pos_features, neg_features], axis=0)
+    # Specify parameter search grid
+    # The grid size is kept small to reduce the computation time
+    # Good values (known from offline grid search) are:
+    # 'n_estimators': 61
+    # 'max_depth': 10
+    # 'class_weight': {{0: 1, 1: 89}}
+    param_grid = [
+        {'n_estimators': [30, 61],
+         'max_depth': [5, 10],
+         'class_weight': [{0: 1, 1: 30}, {0: 1, 1: 50}, {0: 1, 1: 89}]}
+    ]
 
-    order = np.arange(len(np_df))
-    np.random.shuffle(order)
-    np_df_shuf = np_df[order]
+    ida_scorer = make_scorer(ida_score)
 
-    df = pd.DataFrame(np_df_shuf, columns=cols)
-    return df
+    # Search for optimal values in grid using 5-fold cross validation
+    grid_search = GridSearchCV(clf, param_grid, cv=5, scoring=ida_scorer, n_jobs=-1)
+    grid_search.fit(X_data, y.values.ravel())
+
+    # Create new model with optimal parameter values
+    clf = ExtraTreesClassifier(n_jobs=-1,
+                               n_estimators=grid_search.best_params_['n_estimators'],
+                               max_depth=grid_search.best_params_['max_depth'],
+                               class_weight=grid_search.best_params_['class_weight'])
+
+    # fuse the classifier and the transformer into one pipeline.
+    # This guarantees the preprocessing stays the same for each use of the model.
+    model = Pipeline([
+        ('transform', transformer),
+        ('clf', clf)
+    ])
+
+    return model, grid_search
+
+# Evaluate the trained model
+def test_eval(data_and_labels, clf):
+    y = data_and_labels[0]
+    X_data = data_and_labels[1]
+
+    # Predict classes of test data
+    y_pred = clf.predict(X_data)
+
+    # Examine the results
+    confusion_mat = confusion_matrix(y, y_pred)
+    confusion_matrix_df = pd.DataFrame(confusion_mat,
+                                       index=['actual neg', 'actual pos'],
+                                       columns=['predicted neg', 'predicted pos'])
+
+    print("Total Cost:", - ida_score(y, y_pred), "\n")
+    print("Confusion Matrix:\n", confusion_matrix_df)
 
 
-def remove_nans(dataframe):
-    df = dataframe.copy()
-    df = df.dropna(axis=0, thresh=35).reset_index(drop=True)
-    df = df.fillna(method="ffill", axis=1, inplace=False, limit=None)
-    return df
-
-
-def get_class_balance(df):
-    neg, pos = np.bincount(df['CLASS_POS'])
-    total = neg + pos
-    print('train:\n    Total: {}\n    Positive: {} ({:.2f}% of total)\n'.format(
-        total, pos, 100 * pos / total))
-    return neg, pos, total
-
-
-def get_weight_bias(df):
-    neg, pos, total = get_class_balance(df)
-
-    initial_bias = np.log([pos / neg])
-
-    weight_for_0 = (1 / neg) * (total / 2)
-    weight_for_1 = (1 / pos) * (total / 2)
-
-    class_weight = {0: weight_for_0, 1: weight_for_1}
-    print(f"initial bias {initial_bias}")
-    print('Weight for class 0: {:.2f}'.format(weight_for_0))
-    print('Weight for class 1: {:.2f}'.format(weight_for_1))
-    return initial_bias, class_weight
-
-
-# Next, create a utility function that converts each training, validation, and test set DataFrame into a tf.data.Dataset, then shuffles and batches the data.
-# todo batching by azml? or you would use the tf.data API
-def df_to_dataset(dataframe, shuffle=True, batch_size=32):
-    df = dataframe.copy()
-    labels = df.pop('CLASS_POS')
-
-    ds = tf.data.Dataset.from_tensor_slices((df, labels))
-    if shuffle:
-        ds = ds.shuffle(buffer_size=len(dataframe))
-    ds = ds.batch(batch_size)
-    ds = ds.prefetch(batch_size)
-    return ds
+# Define scoring metric for grid search from problem description of the Scania Trucks dataset
+def ida_score(y, y_pred):
+    false_preds = y - y_pred
+    num_false_pos = (false_preds < 0).sum()
+    num_false_neg = (false_preds > 0).sum()
+    return -(num_false_pos * 10 + num_false_neg * 500)
 
 
 if __name__ == "__main__":
     main()
-
