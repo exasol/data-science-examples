@@ -1,4 +1,4 @@
-# data-science-examples 1.0.0, released 2023-13-10
+# data-science-examples 1.0.0, released 2023-10-16
 
 First release of this collection of examples for Integrating the Exasol Database with datascience
 focused applications and packages.
