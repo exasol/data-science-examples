@@ -9,8 +9,10 @@ For general prerequisites, please refer to [Prerequisites](../README.md).
 
 * [Machine Learning](machine-learning)
   * [Python](machine-learning/python):
+    * [AzureML](machine-learning/python/AzureML/Introduction.ipynb)
     * [Scikit-learn](machine-learning/python/scikit-learn)
     * [Sagemaker](machine-learning/python/sagemaker) Using AWS sagemaker for machine learning with Exasol
+  * [SageMaker Extension](machine-learning/sagemaker-extension)
 * [Script-Language Container](script-languages)
 * [Spatial Analysis](spatial-analysis)
   * [Visualizing Spatial Queries](spatial-analysis/visualizing_spatial_queries)

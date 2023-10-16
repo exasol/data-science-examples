@@ -1,7 +1,17 @@
 ## Python Tutorials
 This section contains tutorials with the Python Programming Language. We are going to provide examples for different frameworks, tasks and use cases.
 
-**Currently, this repository is under development and we will add more and more frameworks and tutorials in the future.**
+### AzureML:
+[AzureML](https://azure.microsoft.com/de-de/products/machine-learning) is a Microsoft service for the Machine 
+learning lifecycle in Azure.
+
+This tutorial will show you:
+
+* [A general introduction to the topic](AzureML/Introduction.ipynb), we recommend you start here
+* [How to connect AzureML to Exasol](AzureML/ConnectAzureMLtoExasol.ipynb)
+* [How to Train a model using data from Exasol](AzureML/TrainModelInAzureML.ipynb)
+* [How to Invoke the trained model from an Exasol UDF](AzureML/InvokeModelFromExasolDBwithUDF.ipynb)
+
 
 ### Frameworks:
 
