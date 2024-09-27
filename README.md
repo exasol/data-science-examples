@@ -1,3 +1,5 @@
+⚠ This project has been archived please check [Exasol's AI Lab](https://github.com/exasol/ai-lab) for data science examples.
+
 # Data Science with Exasol
 This repository contains a collection of examples and tutorials for Data Science and Machine Learning with Exasol. In those examples and tutorials you learn how to explore and prepare your data and build, train and deploy your model with and within Exasol.
 
